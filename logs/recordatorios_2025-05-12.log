@@ -1,0 +1,26 @@
+[2025-05-12 16:29:19] Iniciando proceso de recordatorios
+[2025-05-12 16:29:19] Verificando recordatorios para el día 2025-05-12
+[2025-05-12 16:29:19] Administrador encontrado: Administrador (admin@example.com)
+[2025-05-12 16:29:19] No hay clientes con fecha de pago hoy.
+[2025-05-12 16:29:19] No hay clientes con cumpleaños hoy.
+[2025-05-12 16:29:19] Proceso de recordatorios completado.
+[2025-05-12 16:30:43] Iniciando proceso de recordatorios
+[2025-05-12 16:30:43] Verificando recordatorios para el día 2025-05-12
+[2025-05-12 16:30:43] Administrador encontrado: Administrador (ernalytvasquez25@gmail.com)
+[2025-05-12 16:30:43] No hay clientes con fecha de pago hoy.
+[2025-05-12 16:30:43] No hay clientes con cumpleaños hoy.
+[2025-05-12 16:30:43] Proceso de recordatorios completado.
+[2025-05-12 16:31:42] Iniciando proceso de recordatorios
+[2025-05-12 16:31:42] Verificando recordatorios para el día 2025-05-12
+[2025-05-12 16:31:42] Administrador encontrado: Administrador (ernalytvasquez25@gmail.com)
+[2025-05-12 16:31:42] Se encontraron 1 clientes con fecha de pago hoy.
+[2025-05-12 16:31:42] Se encontraron 1 clientes con cumpleaños hoy.
+[2025-05-12 16:31:50] Error al enviar correo: SMTP Error: Could not authenticate.
+[2025-05-12 16:31:50] Proceso de recordatorios completado.
+[2025-05-12 16:37:15] Iniciando proceso de recordatorios
+[2025-05-12 16:37:15] Verificando recordatorios para el día 2025-05-12
+[2025-05-12 16:37:15] Administrador encontrado: Administrador (ernalytvasquez25@gmail.com)
+[2025-05-12 16:37:15] Se encontraron 1 clientes con fecha de pago hoy.
+[2025-05-12 16:37:15] Se encontraron 1 clientes con cumpleaños hoy.
+[2025-05-12 16:37:17] Error al enviar correo: SMTP Error: Could not authenticate.
+[2025-05-12 16:37:17] Proceso de recordatorios completado.
