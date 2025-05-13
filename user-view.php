@@ -15,7 +15,6 @@ $user = new User($db);
 $relation = new Relation($db);
 $client = new Client($db);
 
-
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     header("Location: users.php");
     exit();
@@ -59,18 +58,29 @@ include 'includes/layout_header.php';
     <div class="p-4">
         <!-- Información General -->
         <div class="bg-gray-50 p-4 rounded">
-        <p class="mb-2"><span class="font-bold">Nombre:</span> <?php echo $user->nombre_usuario; ?></p>
-        <p class="mb-2"><span class="font-bold">Correo:</span> <?php echo $user->correo_usuario; ?></p>
-        <p class="mb-2"><span class="font-bold">Rol:</span> <?php echo $user->nombre_rol; ?></p>
-        <p class="mb-2"><span class="font-bold">Contraseña:</span> 
-        <?php 
-        // Mostrar la contraseña (texto cifrado recuperado)
-        echo !empty($user->contrasena) ? $user->contrasena : 'No disponible'; 
-        ?>
-    </p>
-</div>
+            <p class="mb-2"><span class="font-bold">Nombre:</span> <?php echo $user->nombre_usuario; ?></p>
+            <p class="mb-2"><span class="font-bold">Correo:</span> <?php echo $user->correo_usuario; ?></p>
+            <p class="mb-2"><span class="font-bold">Rol:</span> <?php echo $user->nombre_rol; ?></p>
+            
+            <p class="mb-2"><span class="font-bold">Contraseña:</span> 
+                <input type="password" id="passwordField" value="<?php echo htmlspecialchars($user->contrasena); ?>" readonly>
+                <button type="button" id="toggleBtn">👁 Mostrar</button>
+            </p>
 
-        
+            <script>
+            document.getElementById("toggleBtn").addEventListener("click", function() {
+                var field = document.getElementById("passwordField");
+                if (field.type === "password") {
+                    field.type = "text";
+                    this.textContent = "👁 Ocultar";
+                } else {
+                    field.type = "password";
+                    this.textContent = "👁 Mostrar";
+                }
+            });
+            </script>
+        </div>
+
         <!-- Clientes Asignados -->
         <h3 class="text-lg font-semibold mb-4">Clientes Asignados</h3>
         <div class="bg-gray-50 p-4 rounded mb-4">

@@ -193,7 +193,14 @@ class Client {
         
         return false;
     }
-    
+    public function delete() {
+    $query = "DELETE FROM " . $this->table_name . " WHERE id_cliente = :id_cliente";
+    $stmt = $this->conn->prepare($query);
+    $stmt->bindParam(":id_cliente", $this->id_cliente, PDO::PARAM_INT);
+
+    return $stmt->execute();
+}
+
 
     // Get social networks for a client
     public function getSocialNetworks() {
