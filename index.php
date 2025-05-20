@@ -79,27 +79,58 @@ include 'includes/layout_header.php';
                     <td><?php echo date('d/m', strtotime($payment['fecha_pago'])); ?></td>
                     <td>
                     <?php 
-                        // Cálculo de días restantes basado en la fecha exacta de pago registrada
-                        $today = new DateTime(); // Fecha actual
-                        $payment_date = new DateTime($payment['fecha_pago']); // Fecha de pago registrada
-                        // Si la fecha de pago ya pasó este mes, ajusta al siguiente mes
+                        // Verificar si la fecha de pago es hoy o mañana
+                        $today = new DateTime(date('Y-m-d')); // Fecha actual sin componente de hora
+                        $tomorrow = new DateTime(date('Y-m-d'));
+                        $tomorrow->modify('+1 day');
+                        
+                        // Crear fecha de pago para este mes
+                        $payment_day = date('d', strtotime($payment['fecha_pago']));
+                        $current_month = date('m');
+                        $current_year = date('Y');
+                        
+                        // Crear fecha de pago para este mes
+                        $payment_date = new DateTime("$current_year-$current_month-$payment_day");
+                        
+                        // Si la fecha ya pasó este mes, ajustar al próximo mes
                         if ($payment_date < $today) {
-                            $payment_date->modify('+1 month');
+                            $payment_date->modify('first day of next month');
+                            $payment_date->modify(($payment_day - 1) . ' days');
+                            
+                            // Verificar si el día existe en el próximo mes (por ejemplo, 31 de febrero)
+                            $last_day_of_month = $payment_date->format('t');
+                            if ($payment_day > $last_day_of_month) {
+                                $payment_date = new DateTime($payment_date->format('Y-m-') . $last_day_of_month);
+                            }
                         }
-
-                        // Calcula la diferencia en días
-                        $days_left = $today->diff($payment_date)->days;
-
-                        // Determina la clase de estado basada en los días restantes
-                        $status_class = 'completed';
-                        if ($days_left <= 2) {
+                        
+                        // Verificar si es hoy, mañana o futuro
+                        if ($payment_date->format('Y-m-d') === $today->format('Y-m-d')) {
+                            // Es hoy
                             $status_class = 'pending';
-                        } elseif ($days_left <= 5) {
-                            $status_class = 'processing';
+                            $days_text = 'Hoy';
+                        } elseif ($payment_date->format('Y-m-d') === $tomorrow->format('Y-m-d')) {
+                            // Es mañana
+                            $status_class = 'pending';
+                            $days_text = 'Mañana';
+                        } else {
+                            // Calcular la diferencia en días
+                            $days_left = $today->diff($payment_date)->days;
+                            
+                            // Determinar la clase de estado
+                            $status_class = 'completed';
+                            if ($days_left <= 2) {
+                                $status_class = 'pending';
+                            } elseif ($days_left <= 5) {
+                                $status_class = 'processing';
+                            }
+                            
+                            // Usar singular o plural según corresponda
+                            $days_text = $days_left == 1 ? '1 día' : $days_left . ' días';
                         }
                     ?>
                         <span class="status <?php echo $status_class; ?>">
-                            <?php echo $days_left; ?> días
+                            <?php echo $days_text; ?>
                         </span>
                     </td>
                     <td>
@@ -148,26 +179,48 @@ include 'includes/layout_header.php';
                     <td><?php echo date('d/m', strtotime($birthday['cumpleaños'])); ?></td>
                     <td>
                         <?php 
-
-                            $birth_date = new DateTime($birthday['cumpleaños']);
-                            $today = new DateTime();
-                            $birth_date->setDate($today->format('Y'), $birth_date->format('m'), $birth_date->format('d'));
+                            // Verificar si el cumpleaños es hoy o mañana
+                            $today = new DateTime(date('Y-m-d')); // Fecha actual sin componente de hora
+                            $tomorrow = new DateTime(date('Y-m-d'));
+                            $tomorrow->modify('+1 day');
                             
-                            if($birth_date < $today) {
+                            $birth_date = new DateTime(date('Y-m-d', strtotime($birthday['cumpleaños']))); // Fecha de cumpleaños sin componente de hora
+                            
+                            // Ajustar al año actual
+                            $birth_date->setDate(date('Y'), $birth_date->format('m'), $birth_date->format('d'));
+                            
+                            // Si la fecha ya pasó este año, ajustar al próximo año
+                            if ($birth_date < $today) {
                                 $birth_date->modify('+1 year');
                             }
                             
-                            $days_left = $today->diff($birth_date)->days;
-                            
-                            $status_class = 'completed';
-                            if($days_left <= 7) {
+                            // Verificar si es hoy, mañana o futuro
+                            if ($birth_date->format('Y-m-d') === $today->format('Y-m-d')) {
+                                // Es hoy
                                 $status_class = 'pending';
-                            } else if($days_left <= 14) {
-                                $status_class = 'processing';
+                                $days_text = 'Hoy';
+                            } elseif ($birth_date->format('Y-m-d') === $tomorrow->format('Y-m-d')) {
+                                // Es mañana
+                                $status_class = 'pending';
+                                $days_text = 'Mañana';
+                            } else {
+                                // Calcular la diferencia en días
+                                $days_left = $today->diff($birth_date)->days;
+                                
+                                // Determinar la clase de estado
+                                $status_class = 'completed';
+                                if ($days_left <= 7) {
+                                    $status_class = 'pending';
+                                } else if ($days_left <= 14) {
+                                    $status_class = 'processing';
+                                }
+                                
+                                // Usar singular o plural según corresponda
+                                $days_text = $days_left == 1 ? '1 día' : $days_left . ' días';
                             }
                         ?>
                         <span class="status <?php echo $status_class; ?>">
-                            <?php echo $days_left; ?> días
+                            <?php echo $days_text; ?>
                         </span>
                     </td>
                     <td>
@@ -237,6 +290,5 @@ include 'includes/layout_header.php';
 </div>
 
 <?php
-
 include 'includes/layout_footer.php';
 ?>

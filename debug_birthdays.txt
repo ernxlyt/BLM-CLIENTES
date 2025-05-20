@@ -1,0 +1,30 @@
+Array
+(
+    [0] => Array
+        (
+            [id_cliente] => 3
+            [nombre_cliente] => Cliente Ejemplo 3
+            [cumpleaños] => 2025-05-20
+            [fecha_cumple] => 05-20
+            [fecha_hoy] => 05-20
+        )
+
+    [1] => Array
+        (
+            [id_cliente] => 6
+            [nombre_cliente] => Nuevo 
+            [cumpleaños] => 2025-05-20
+            [fecha_cumple] => 05-20
+            [fecha_hoy] => 05-20
+        )
+
+    [2] => Array
+        (
+            [id_cliente] => 12
+            [nombre_cliente] => erna
+            [cumpleaños] => 2008-05-20
+            [fecha_cumple] => 05-20
+            [fecha_hoy] => 05-20
+        )
+
+)
