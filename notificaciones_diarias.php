@@ -131,7 +131,7 @@ if (count($clientes_pago) > 0) {
 
 // Notificar a TODOS los usuarios sobre cumpleaños
 if (count($clientes_cumple) > 0) {
-    $asunto = "Recordatorio de cumpleaños de clientes";
+    $asunto = "Recordatorio de cumpleañoos de clientes";
     $mensaje = '
     <!DOCTYPE html>
     <html lang="es">
