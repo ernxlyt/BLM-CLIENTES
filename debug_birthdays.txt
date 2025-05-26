@@ -2,11 +2,11 @@ Array
 (
     [0] => Array
         (
-            [id_cliente] => 12
-            [nombre_cliente] => erna
-            [cumpleaños] => 2008-05-21
-            [fecha_cumple] => 05-21
-            [fecha_hoy] => 05-21
+            [id_cliente] => 1
+            [nombre_cliente] => Cliente Ejemplo 1
+            [cumpleaños] => 2025-05-22
+            [fecha_cumple] => 05-22
+            [fecha_hoy] => 05-22
         )
 
 )
