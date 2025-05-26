@@ -1,0 +1,21 @@
+Array
+(
+    [0] => Array
+        (
+            [id_cliente] => 5
+            [nombre_cliente] => Group
+            [cumpleaños] => 2025-05-26
+            [fecha_cumple] => 05-26
+            [fecha_hoy] => 05-26
+        )
+
+    [1] => Array
+        (
+            [id_cliente] => 12
+            [nombre_cliente] => erna
+            [cumpleaños] => 2025-05-26
+            [fecha_cumple] => 05-26
+            [fecha_hoy] => 05-26
+        )
+
+)
