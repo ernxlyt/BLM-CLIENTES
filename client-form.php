@@ -40,6 +40,17 @@ if(isset($_GET['id']) && !empty($_GET['id'])) {
 
 // Process form submission
 if($_SERVER['REQUEST_METHOD'] === 'POST') {
+    
+    // DEBUG - Mostrar datos recibidos (remover después de verificar)
+    if(isset($_GET['debug'])) {
+        echo "<div style='background: #fff3cd; padding: 15px; margin: 15px; border: 1px solid #ffeaa7; border-radius: 5px;'>";
+        echo "<h4>🔍 DEBUG - Datos del formulario:</h4>";
+        echo "<strong>País:</strong> '" . ($_POST['pais'] ?? 'NO ENVIADO') . "'<br>";
+        echo "<strong>Provincia:</strong> '" . ($_POST['provincia'] ?? 'NO ENVIADO') . "'<br>";
+        echo "<strong>Nombre:</strong> '" . ($_POST['nombre_cliente'] ?? 'NO ENVIADO') . "'<br>";
+        echo "</div>";
+    }
+    
     try {
         // Iniciar transacción para asegurar consistencia
         $db->beginTransaction();
@@ -52,6 +63,10 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
         $client->estado = $_POST['estado'];
         $client->id_plan = !empty($_POST['id_plan']) ? $_POST['id_plan'] : null;
         $client->id_empresa = !empty($_POST['id_empresa']) ? $_POST['id_empresa'] : null;
+        
+        // CAMPOS GEOGRÁFICOS - Asegurar que se asignen correctamente
+        $client->pais = isset($_POST['pais']) && !empty(trim($_POST['pais'])) ? trim($_POST['pais']) : null;
+        $client->provincia = isset($_POST['provincia']) && !empty(trim($_POST['provincia'])) ? trim($_POST['provincia']) : null;
         
         // Create or update client
         $client_success = false;
@@ -198,6 +213,76 @@ include 'includes/layout_header.php';
     margin-top: 30px;
     border-radius: 0 0 8px 8px;
 }
+
+.location-section {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2px solid #0ea5e9;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.location-icon {
+    color: #0ea5e9;
+    font-size: 1.2em;
+}
+
+/* Estilos para el formulario de red social */
+.social-network-section {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.social-network-form {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 15px;
+    border: 1px solid #e5e7eb;
+}
+
+.toggle-button {
+    transition: all 0.3s ease;
+    transform: scale(1);
+}
+
+.toggle-button:hover {
+    transform: scale(1.05);
+}
+
+.toggle-button.active {
+    background-color: #ef4444 !important;
+}
+
+.toggle-button.active:hover {
+    background-color: #dc2626 !important;
+}
+
+/* Animaciones para mostrar/ocultar formulario */
+.social-form-enter {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.social-form-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.social-form-exit {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.3s ease;
+}
+
+.social-form-exit-active {
+    opacity: 0;
+    transform: translateY(-10px);
+}
 </style>
 
 <?php if(isset($error_message)): ?>
@@ -224,7 +309,7 @@ include 'includes/layout_header.php';
                             Nombre del Cliente <span class="text-red-500">*</span>
                         </label>
                         <input type="text" id="nombre_cliente" name="nombre_cliente" required 
-                               value="<?php echo $action === "update" ? htmlspecialchars($client->nombre_cliente) : ''; ?>"
+                               value="<?php echo $action === "update" ? htmlspecialchars($client->nombre_cliente ?? '') : ''; ?>"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
                     </div>
                     
@@ -234,7 +319,7 @@ include 'includes/layout_header.php';
                             Fecha de Inicio <span class="text-red-500">*</span>
                         </label>
                         <input type="date" id="fecha_inicio" name="fecha_inicio" required 
-                               value="<?php echo $action === "update" ? $client->fecha_inicio : ''; ?>"
+                               value="<?php echo $action === "update" ? ($client->fecha_inicio ?? '') : ''; ?>"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
                     </div>
                     
@@ -244,7 +329,7 @@ include 'includes/layout_header.php';
                             Cumpleaños <span class="text-red-500">*</span>
                         </label>
                         <input type="date" id="cumpleaños" name="cumpleaños" required 
-                               value="<?php echo $action === "update" ? $client->cumpleaños : ''; ?>"
+                               value="<?php echo $action === "update" ? ($client->cumpleaños ?? '') : ''; ?>"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
                     </div>
                     
@@ -254,7 +339,7 @@ include 'includes/layout_header.php';
                             Fecha de Pago <span class="text-red-500">*</span>
                         </label>
                         <input type="date" id="fecha_pago" name="fecha_pago" required 
-                               value="<?php echo $action === "update" ? $client->fecha_pago : ''; ?>"
+                               value="<?php echo $action === "update" ? ($client->fecha_pago ?? '') : ''; ?>"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
                     </div>
                     
@@ -265,8 +350,8 @@ include 'includes/layout_header.php';
                         </label>
                         <select id="estado" name="estado" required 
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                            <option value="activo" <?php echo ($action === "update" && $client->estado === "activo") ? "selected" : ""; ?>>Activo</option>
-                            <option value="inactivo" <?php echo ($action === "update" && $client->estado === "inactivo") ? "selected" : ""; ?>>Inactivo</option>
+                            <option value="Activo" <?php echo ($action === "update" && ($client->estado ?? '') === "Activo") ? "selected" : ""; ?>>Activo</option>
+                            <option value="Inactivo" <?php echo ($action === "update" && ($client->estado ?? '') === "Inactivo") ? "selected" : ""; ?>>Inactivo</option>
                         </select>
                     </div>
                     
@@ -279,7 +364,7 @@ include 'includes/layout_header.php';
                             <?php 
                             while($row = $planes_stmt->fetch(PDO::FETCH_ASSOC)) {
                                 extract($row);
-                                $selected = ($action === "update" && $client->id_plan == $id_plan) ? "selected" : "";
+                                $selected = ($action === "update" && ($client->id_plan ?? '') == $id_plan) ? "selected" : "";
                                 echo "<option value='{$id_plan}' {$selected}>{$nombre_plan} - $" . number_format($precio, 2) . "</option>";
                             }
                             ?>
@@ -295,35 +380,89 @@ include 'includes/layout_header.php';
                             <?php 
                             while($row = $empresas_stmt->fetch(PDO::FETCH_ASSOC)) {
                                 extract($row);
-                                $selected = ($action === "update" && $client->id_empresa == $id_empresa) ? "selected" : "";
+                                $selected = ($action === "update" && ($client->id_empresa ?? '') == $id_empresa) ? "selected" : "";
                                 echo "<option value='{$id_empresa}' {$selected}>{$nombre_empresa} - {$rubro}</option>";
                             }
                             ?>
                         </select>
                     </div>
                 </div>
+
+                <!-- Sección de Ubicación Geográfica -->
+                <div class="location-section">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-map-marked-alt location-icon mr-3"></i>
+                        <h3 class="text-lg font-semibold text-gray-800">Ubicación Geográfica</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- País -->
+                        <div class="bg-white p-4 rounded-lg border border-blue-200">
+                            <label for="pais" class="block text-gray-700 font-medium mb-2">
+                                <i class="fas fa-globe location-icon mr-2"></i>País
+                            </label>
+                            <input type="text" id="pais" name="pais" 
+                                   value="<?php echo $action === "update" && isset($client->pais) ? htmlspecialchars($client->pais) : ''; ?>"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                   placeholder="Ej: México, Colombia, Argentina...">
+                            <small class="text-gray-500 mt-1 block">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Escriba el nombre del país
+                            </small>
+                        </div>
+                        
+                        <!-- Ubicación (Provincia/Estado) -->
+                        <div class="bg-white p-4 rounded-lg border border-blue-200">
+                            <label for="provincia" class="block text-gray-700 font-medium mb-2">
+                                <i class="fas fa-map-marker-alt location-icon mr-2"></i>Ubicación (Estado/Provincia/Ciudad)
+                            </label>
+                            <input type="text" id="provincia" name="provincia" 
+                                   value="<?php echo $action === "update" && isset($client->provincia) ? htmlspecialchars($client->provincia) : ''; ?>"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                   placeholder="Ej: Ciudad de México, Buenos Aires, Bogotá...">
+                            <small class="text-gray-500 mt-1 block">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Puede incluir estado, provincia, ciudad o región
+                            </small>
+                        </div>
+                    </div>
+                </div>
                 
-                <!-- Agregar Red Social (Colapsable) -->
-                <div class="bg-blue-50 p-6 rounded-lg border border-blue-200 mt-8">
+                <!-- Agregar Red Social (Mejorado con el componente del attachment) -->
+                <div class="social-network-section">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-blue-800">Agregar Red Social (Opcional)</h3>
-                        <button type="button" onclick="toggleSocialNetworkForm()" 
-                                class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                        <div class="flex items-center">
+                            <i class="fas fa-share-alt text-blue-600 mr-3" style="font-size: 1.2em;"></i>
+                            <h3 class="text-lg font-semibold text-blue-800">Agregar Red Social (Opcional)</h3>
+                        </div>
+                        <button type="button" 
+                                id="toggleSocialButton"
+                                onclick="toggleSocialNetworkForm()" 
+                                class="toggle-button px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 font-medium shadow-md">
                             <i class="fas fa-plus mr-2"></i>Agregar Red Social
                         </button>
                     </div>
                     
-                    <div id="social-network-form" class="hidden">
+                    <div id="social-network-form" class="social-network-form hidden">
                         <input type="hidden" name="add_social_network" id="add_social_network" value="0">
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="mb-6">
+                            <div class="flex items-center mb-3">
+                                <i class="fas fa-network-wired text-blue-600 mr-2"></i>
+                                <h4 class="text-md font-semibold text-gray-700">Información de la Red Social</h4>
+                            </div>
+                            <div class="h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mb-4"></div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <div>
                                 <label for="tipo_red" class="block text-gray-700 font-medium mb-2">
+                                    <i class="fas fa-tags text-blue-500 mr-2"></i>
                                     Tipo de Red Social <span class="text-red-500">*</span>
                                 </label>
                                 <div class="flex">
                                     <select id="tipo_red" name="tipo_red" 
-                                            class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                            class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
                                             onchange="handleNetworkTypeChange()">
                                         <option value="">Seleccionar Tipo</option>
                                         <?php foreach($network_types as $type): ?>
@@ -333,71 +472,96 @@ include 'includes/layout_header.php';
                                             <?php echo htmlspecialchars($type['nombre_tipo']); ?>
                                         </option>
                                         <?php endforeach; ?>
-                                        <option value="other">Otro (Personalizado)</option>
+                                        <option value="other">🔧 Otro (Personalizado)</option>
                                     </select>
                                     <button type="button" onclick="toggleNewNetworkType()" 
-                                            class="ml-2 px-3 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none" 
+                                            class="ml-3 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:outline-none transition-all" 
                                             title="Agregar nuevo tipo">
                                         <i class="fas fa-plus"></i>
                                     </button>
                                 </div>
                                 
                                 <!-- Campo para nuevo tipo de red social -->
-                                <div id="new-network-type-container" class="hidden mt-2">
+                                <div id="new-network-type-container" class="hidden mt-3">
                                     <input type="text" id="new_network_type" name="new_network_type" 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" 
                                            placeholder="Nombre del nuevo tipo de red social">
                                 </div>
                             </div>
                             <div>
                                 <label for="nombre_red" class="block text-gray-700 font-medium mb-2">
+                                    <i class="fas fa-user-circle text-blue-500 mr-2"></i>
                                     Nombre de la Cuenta <span class="text-red-500">*</span>
                                 </label>
                                 <input type="text" id="nombre_red" name="nombre_red" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
                                        placeholder="Ej: Cuenta Principal, Cuenta Secundaria, etc.">
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <div>
-                                <label for="usuario_red" class="block text-gray-700 font-medium mb-2">Usuario o Correo</label>
+                                <label for="usuario_red" class="block text-gray-700 font-medium mb-2">
+                                    <i class="fas fa-at text-blue-500 mr-2"></i>
+                                    Usuario o Correo
+                                </label>
                                 <input type="text" id="usuario_red" name="usuario_red" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
                                        placeholder="Nombre de usuario o correo electrónico">
                             </div>
                             <div>
-                                <label for="contrasena_red" class="block text-gray-700 font-medium mb-2">Contraseña</label>
+                                <label for="contrasena_red" class="block text-gray-700 font-medium mb-2">
+                                    <i class="fas fa-lock text-blue-500 mr-2"></i>
+                                    Contraseña
+                                </label>
                                 <div class="relative">
                                     <input type="password" id="contrasena_red" name="contrasena_red" 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                           class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
                                            placeholder="Contraseña de la cuenta">
-                                    <button type="button" class="absolute inset-y-0 right-0 px-3 flex items-center" 
+                                    <button type="button" class="absolute inset-y-0 right-0 px-4 flex items-center" 
                                             onclick="togglePasswordVisibility('contrasena_red')">
-                                        <i class="fas fa-eye text-gray-400"></i>
+                                        <i class="fas fa-eye text-gray-400 hover:text-gray-600 transition-colors"></i>
                                     </button>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="mb-4">
-                            <label for="url_red" class="block text-gray-700 font-medium mb-2">URL (opcional)</label>
+                        <div class="mb-6">
+                            <label for="url_red" class="block text-gray-700 font-medium mb-2">
+                                <i class="fas fa-link text-blue-500 mr-2"></i>
+                                URL (opcional)
+                            </label>
                             <input type="url" id="url_red" name="url_red" 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
                                    placeholder="https://ejemplo.com/perfil">
                         </div>
                         
-                        <div class="mb-4">
-                            <label for="notas" class="block text-gray-700 font-medium mb-2">Notas (opcional)</label>
-                            <textarea id="notas" name="notas" rows="3" 
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                                      placeholder="Información adicional sobre esta cuenta"></textarea>
+                        <div class="mb-6">
+                            <label for="notas" class="block text-gray-700 font-medium mb-2">
+                                <i class="fas fa-sticky-note text-blue-500 mr-2"></i>
+                                Notas (opcional)
+                            </label>
+                            <textarea id="notas" name="notas" rows="4" 
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none" 
+                                      placeholder="Información adicional sobre esta cuenta..."></textarea>
+                        </div>
+                        
+                        <!-- Botones de acción del formulario de red social -->
+                        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                            <button type="button" onclick="clearSocialNetworkForm()" 
+                                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:outline-none transition-all">
+                                <i class="fas fa-eraser mr-2"></i>Limpiar
+                            </button>
+                            <button type="button" onclick="toggleSocialNetworkForm()" 
+                                    class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none transition-all">
+                                <i class="fas fa-times mr-2"></i>Cancelar
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Botones de acción - MUY VISIBLES -->
+            <!-- Botones de acción principales -->
             <div class="form-actions">
                 <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
                     <a href="clients.php" class="btn-secondary w-full sm:w-auto text-center">
@@ -428,38 +592,78 @@ include 'includes/layout_header.php';
 </div>
 
 <script>
-    // Función para mostrar/ocultar el formulario de red social
+    // Variables globales para el manejo del formulario
+    let socialFormVisible = false;
+    let formSubmitted = false;
+
+    // Función mejorada para mostrar/ocultar el formulario de red social
     function toggleSocialNetworkForm() {
         const form = document.getElementById('social-network-form');
         const addSocialNetwork = document.getElementById('add_social_network');
-        const button = event.target.closest('button');
+        const button = document.getElementById('toggleSocialButton');
         
-        if (form.classList.contains('hidden')) {
+        if (!socialFormVisible) {
+            // Mostrar formulario
             form.classList.remove('hidden');
+            form.classList.add('social-form-enter');
+            
+            setTimeout(() => {
+                form.classList.remove('social-form-enter');
+                form.classList.add('social-form-enter-active');
+            }, 10);
+            
             addSocialNetwork.value = '1';
             button.innerHTML = '<i class="fas fa-minus mr-2"></i>Ocultar Red Social';
             button.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-            button.classList.add('bg-red-500', 'hover:bg-red-600');
+            button.classList.add('bg-red-500', 'hover:bg-red-600', 'active');
+            socialFormVisible = true;
+            
+            // Focus en el primer campo
+            setTimeout(() => {
+                document.getElementById('tipo_red').focus();
+            }, 300);
+            
         } else {
-            form.classList.add('hidden');
+            // Ocultar formulario
+            form.classList.add('social-form-exit');
+            
+            setTimeout(() => {
+                form.classList.remove('social-form-exit', 'social-form-enter-active');
+                form.classList.add('hidden');
+                clearSocialNetworkForm();
+            }, 300);
+            
             addSocialNetwork.value = '0';
             button.innerHTML = '<i class="fas fa-plus mr-2"></i>Agregar Red Social';
-            button.classList.remove('bg-red-500', 'hover:bg-red-600');
+            button.classList.remove('bg-red-500', 'hover:bg-red-600', 'active');
             button.classList.add('bg-blue-500', 'hover:bg-blue-600');
-            clearSocialNetworkForm();
+            socialFormVisible = false;
         }
     }
     
     // Función para limpiar el formulario de red social
     function clearSocialNetworkForm() {
-        document.getElementById('tipo_red').value = '';
-        document.getElementById('nombre_red').value = '';
-        document.getElementById('usuario_red').value = '';
-        document.getElementById('contrasena_red').value = '';
-        document.getElementById('url_red').value = '';
-        document.getElementById('notas').value = '';
-        document.getElementById('new_network_type').value = '';
+        const fields = ['tipo_red', 'nombre_red', 'usuario_red', 'contrasena_red', 'url_red', 'notas', 'new_network_type'];
+        
+        fields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.value = '';
+            }
+        });
+        
         document.getElementById('new-network-type-container').classList.add('hidden');
+        
+        // Resetear el tipo de contraseña
+        const passwordField = document.getElementById('contrasena_red');
+        if (passwordField && passwordField.type === 'text') {
+            passwordField.type = 'password';
+            const eyeIcon = passwordField.parentElement.querySelector('i');
+            if (eyeIcon) {
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        }
     }
     
     // Función para limpiar todo el formulario
@@ -467,12 +671,20 @@ include 'includes/layout_header.php';
         if (confirm('¿Está seguro de que desea limpiar todos los campos del formulario?')) {
             document.getElementById('clientForm').reset();
             clearSocialNetworkForm();
-            document.getElementById('social-network-form').classList.add('hidden');
-            document.getElementById('add_social_network').value = '0';
+            
+            if (socialFormVisible) {
+                toggleSocialNetworkForm();
+            }
+            
+            // Resetear el estado del formulario
+            formSubmitted = false;
+            const saveButton = document.getElementById('saveButton');
+            saveButton.innerHTML = '<i class="fas fa-save mr-2"></i><?php echo $action === "create" ? "Crear Cliente" : "Actualizar Cliente"; ?>';
+            saveButton.disabled = false;
         }
     }
     
-    // Función para mostrar/ocultar contraseña
+    // Función mejorada para mostrar/ocultar contraseña
     function togglePasswordVisibility(inputId) {
         const passwordInput = document.getElementById(inputId);
         const toggleButton = passwordInput.nextElementSibling;
@@ -482,9 +694,10 @@ include 'includes/layout_header.php';
             passwordInput.type = 'text';
             eyeIcon.classList.remove('fa-eye');
             eyeIcon.classList.add('fa-eye-slash');
+            eyeIcon.classList.add('text-blue-600');
         } else {
             passwordInput.type = 'password';
-            eyeIcon.classList.remove('fa-eye-slash');
+            eyeIcon.classList.remove('fa-eye-slash', 'text-blue-600');
             eyeIcon.classList.add('fa-eye');
         }
     }
@@ -498,6 +711,10 @@ include 'includes/layout_header.php';
             container.classList.remove('hidden');
             tipoRedSelect.value = 'other';
             handleNetworkTypeChange();
+            
+            setTimeout(() => {
+                document.getElementById('new_network_type').focus();
+            }, 100);
         } else {
             container.classList.add('hidden');
             tipoRedSelect.value = '';
@@ -521,14 +738,20 @@ include 'includes/layout_header.php';
             newNetworkTypeContainer.classList.add('hidden');
             document.getElementById('new_network_type').value = '';
             
+            // Auto-llenar el nombre de la cuenta si está vacío
             if (nombreRedInput.value === '' && tipoRedSelect.value !== '') {
-                nombreRedInput.value = selectedOption.text;
+                nombreRedInput.value = selectedOption.text.replace('🔧 ', '');
             }
         }
     }
     
-    // Validación del formulario antes de enviar
+    // Validación mejorada del formulario antes de enviar
     document.getElementById('clientForm').addEventListener('submit', function(e) {
+        if (formSubmitted) {
+            e.preventDefault();
+            return false;
+        }
+        
         const saveButton = document.getElementById('saveButton');
         
         // Cambiar el botón para mostrar que se está procesando
@@ -537,6 +760,7 @@ include 'includes/layout_header.php';
         
         const addSocialNetwork = document.getElementById('add_social_network').value;
         
+        // Validar formulario de red social si está activo
         if (addSocialNetwork === '1') {
             const tipoRed = document.getElementById('tipo_red').value;
             const newNetworkType = document.getElementById('new_network_type').value;
@@ -545,31 +769,85 @@ include 'includes/layout_header.php';
             if ((tipoRed === '' || tipoRed === 'other') && newNetworkType === '') {
                 e.preventDefault();
                 alert('Por favor, seleccione o especifique un tipo de red social.');
-                // Restaurar el botón
-                saveButton.innerHTML = '<i class="fas fa-save mr-2"></i><?php echo $action === "create" ? "Crear Cliente" : "Actualizar Cliente"; ?>';
-                saveButton.disabled = false;
+                resetSubmitButton();
                 return false;
             }
             
             if (nombreRed === '') {
                 e.preventDefault();
                 alert('Por favor, especifique un nombre para la cuenta de red social.');
-                // Restaurar el botón
-                saveButton.innerHTML = '<i class="fas fa-save mr-2"></i><?php echo $action === "create" ? "Crear Cliente" : "Actualizar Cliente"; ?>';
-                saveButton.disabled = false;
+                resetSubmitButton();
                 return false;
             }
         }
-    });
-    
-    // Prevenir envío múltiple del formulario
-    let formSubmitted = false;
-    document.getElementById('clientForm').addEventListener('submit', function(e) {
-        if (formSubmitted) {
+        
+        // Validar campos geográficos (opcional pero útil)
+        const pais = document.getElementById('pais').value.trim();
+        const provincia = document.getElementById('provincia').value.trim();
+        
+        if (pais && pais.length < 2) {
             e.preventDefault();
+            alert('El nombre del país debe tener al menos 2 caracteres.');
+            resetSubmitButton();
             return false;
         }
+        
+        if (provincia && provincia.length < 2) {
+            e.preventDefault();
+            alert('El nombre de la ubicación debe tener al menos 2 caracteres.');
+            resetSubmitButton();
+            return false;
+        }
+        
         formSubmitted = true;
+    });
+    
+    // Función auxiliar para resetear el botón de envío
+    function resetSubmitButton() {
+        const saveButton = document.getElementById('saveButton');
+        saveButton.innerHTML = '<i class="fas fa-save mr-2"></i><?php echo $action === "create" ? "Crear Cliente" : "Actualizar Cliente"; ?>';
+        saveButton.disabled = false;
+        formSubmitted = false;
+    }
+    
+    // Prevenir cierre accidental si hay datos en el formulario
+    window.addEventListener('beforeunload', function(e) {
+        const form = document.getElementById('clientForm');
+        const formData = new FormData(form);
+        let hasData = false;
+        
+        for (let [key, value] of formData.entries()) {
+            if (value && value.toString().trim() !== '') {
+                hasData = true;
+                break;
+            }
+        }
+        
+        if (hasData && !formSubmitted) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+    
+    // Inicialización cuando se carga la página
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-focus en el primer campo
+        const firstField = document.getElementById('nombre_cliente');
+        if (firstField && !firstField.value) {
+            firstField.focus();
+        }
+        
+        // Agregar efectos de hover a los campos
+        const inputs = document.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('ring-2', 'ring-blue-200');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('ring-2', 'ring-blue-200');
+            });
+        });
     });
 </script>
 

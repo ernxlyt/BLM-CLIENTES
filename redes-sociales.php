@@ -34,7 +34,12 @@ include 'includes/layout_header.php';
         <?php endif; ?>
     </div>
     
-    <table class="data-table">
+    <!-- Barra de búsqueda -->
+    <div class="search-bar mb-4">
+        <input type="text" id="searchInput" class="form-control" placeholder="Buscar por red social, cliente, usuario o URL...">
+    </div>
+    
+    <table class="data-table" id="socialNetworksTable">
         <thead>
             <tr>
                 <th>Red Social</th>
@@ -101,8 +106,51 @@ include 'includes/layout_header.php';
             }
             ?>
         </tbody>
+        <!-- Mensaje si no hay resultados -->
+        <tfoot>
+            <tr id="noResultsMessage" style="display: none;">
+                <td colspan="5" class="text-center">No se encuentran redes sociales por la búsqueda.</td>
+            </tr>
+        </tfoot>
     </table>
 </div>
+
+<!-- Lógica de búsqueda -->
+<script>
+    const searchInput = document.getElementById('searchInput');
+    const tableRows = document.querySelectorAll('#socialNetworksTable tbody tr');
+    const noResultsMessage = document.getElementById('noResultsMessage');
+
+    searchInput.addEventListener('keyup', function () {
+        const filter = this.value.toLowerCase();
+        let hasResults = false;
+
+        tableRows.forEach(row => {
+            // Verificar si la fila contiene datos (no es el mensaje de "no hay datos")
+            if (row.cells.length === 5) {
+                const cells = row.querySelectorAll('td');
+                const socialNetwork = cells[0]?.innerText.toLowerCase() || '';
+                const client = cells[1]?.innerText.toLowerCase() || '';
+                const user = cells[2]?.innerText.toLowerCase() || '';
+                const url = cells[3]?.innerText.toLowerCase() || '';
+
+                // Filtrar si el texto está presente en cualquier celda
+                if (socialNetwork.includes(filter) || 
+                    client.includes(filter) || 
+                    user.includes(filter) || 
+                    url.includes(filter)) {
+                    row.style.display = ''; // Mostrar fila
+                    hasResults = true;
+                } else {
+                    row.style.display = 'none'; // Ocultar fila
+                }
+            }
+        });
+
+        // Mostrar o ocultar el mensaje de "No se encuentran redes sociales"
+        noResultsMessage.style.display = hasResults ? 'none' : '';
+    });
+</script>
 
 <?php
 // Include footer
