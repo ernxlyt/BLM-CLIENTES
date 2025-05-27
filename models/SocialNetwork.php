@@ -17,21 +17,21 @@ class SocialNetwork {
         $this->conn = $db;
     }
 
-    // Create social network
+    // Create social network with validation
     public function create() {
+        // Verificar que el cliente existe antes de crear la red social
+        if (!$this->clientExists()) {
+            throw new Exception("Error: El cliente con ID {$this->id_cliente} no existe en la base de datos.");
+        }
+
         $query = "INSERT INTO " . $this->table_name . " 
-                  SET id_cliente = :id_cliente, 
-                      tipo_red = :tipo_red, 
-                      nombre_red = :nombre_red, 
-                      usuario_red = :usuario_red, 
-                      contrasena_red = :contrasena_red,
-                      url_red = :url_red,
-                      notas = :notas";
+                  (id_cliente, tipo_red, nombre_red, usuario_red, contrasena_red, url_red, notas) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $this->conn->prepare($query);
 
-        // Sanitize and bind values
-        $this->id_cliente = htmlspecialchars(strip_tags($this->id_cliente));
+        // Sanitize and validate values
+        $this->id_cliente = (int)$this->id_cliente;
         $this->tipo_red = htmlspecialchars(strip_tags($this->tipo_red));
         $this->nombre_red = htmlspecialchars(strip_tags($this->nombre_red));
         $this->usuario_red = htmlspecialchars(strip_tags($this->usuario_red));
@@ -39,46 +39,89 @@ class SocialNetwork {
         $this->url_red = htmlspecialchars(strip_tags($this->url_red));
         $this->notas = htmlspecialchars(strip_tags($this->notas));
 
-        $stmt->bindParam(":id_cliente", $this->id_cliente);
-        $stmt->bindParam(":tipo_red", $this->tipo_red);
-        $stmt->bindParam(":nombre_red", $this->nombre_red);
-        $stmt->bindParam(":usuario_red", $this->usuario_red);
-        $stmt->bindParam(":contrasena_red", $this->contrasena_red);
-        $stmt->bindParam(":url_red", $this->url_red);
-        $stmt->bindParam(":notas", $this->notas);
+        // Bind parameters using positional placeholders
+        $stmt->bindParam(1, $this->id_cliente, PDO::PARAM_INT);
+        $stmt->bindParam(2, $this->tipo_red);
+        $stmt->bindParam(3, $this->nombre_red);
+        $stmt->bindParam(4, $this->usuario_red);
+        $stmt->bindParam(5, $this->contrasena_red);
+        $stmt->bindParam(6, $this->url_red);
+        $stmt->bindParam(7, $this->notas);
 
-        if($stmt->execute()) {
-            $this->id_red = $this->conn->lastInsertId();
-            return true;
+        try {
+            if($stmt->execute()) {
+                $this->id_red = $this->conn->lastInsertId();
+                return true;
+            }
+        } catch (PDOException $e) {
+            // Log del error para debugging
+            error_log("Error en SocialNetwork->create(): " . $e->getMessage());
+            
+            // Si es error de clave externa, dar mensaje más claro
+            if ($e->getCode() == 23000) {
+                throw new Exception("Error: No se puede crear la red social. Verifique que el cliente existe.");
+            }
+            
+            throw new Exception("Error al crear la red social: " . $e->getMessage());
         }
 
         return false;
     }
-    
-    // Añade este método a tu clase SocialNetwork en models/SocialNetwork.php
-public function read($user_id, $is_admin) {
-    if($is_admin) {
-        // Los administradores pueden ver todas las redes sociales
-        $query = "SELECT r.*, c.nombre_cliente 
-                  FROM " . $this->table_name . " r
-                  LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
-                  ORDER BY c.nombre_cliente ASC, r.nombre_red ASC";
+
+    // Método para verificar si el cliente existe
+    private function clientExists() {
+        if (empty($this->id_cliente) || !is_numeric($this->id_cliente)) {
+            return false;
+        }
+
+        $query = "SELECT id_cliente FROM clientes WHERE id_cliente = ? LIMIT 1";
         $stmt = $this->conn->prepare($query);
-    } else {
-        // Los usuarios normales solo ven las redes sociales de los clientes a los que tienen acceso
-        $query = "SELECT r.*, c.nombre_cliente 
-                  FROM " . $this->table_name . " r
-                  LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
-                  JOIN relaciones rel ON c.id_cliente = rel.id_cliente
-                  WHERE rel.id_usuario = ?
-                  ORDER BY c.nombre_cliente ASC, r.nombre_red ASC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $user_id);
+        $stmt->bindParam(1, $this->id_cliente, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        return $stmt->rowCount() > 0;
+    }
+
+    // Método para crear red social con validación completa
+    public function createWithValidation($client_id) {
+        // Asignar el ID del cliente
+        $this->id_cliente = $client_id;
+        
+        // Validar datos requeridos
+        if (empty($this->tipo_red)) {
+            throw new Exception("El tipo de red social es requerido");
+        }
+        
+        if (empty($this->nombre_red)) {
+            throw new Exception("El nombre de la red social es requerido");
+        }
+        
+        // Crear la red social
+        return $this->create();
     }
     
-    $stmt->execute();
-    return $stmt;
-}
+    // Read method with user permissions
+    public function read($user_id, $is_admin) {
+        if($is_admin) {
+            $query = "SELECT r.*, c.nombre_cliente 
+                      FROM " . $this->table_name . " r
+                      LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
+                      ORDER BY c.nombre_cliente ASC, r.nombre_red ASC";
+            $stmt = $this->conn->prepare($query);
+        } else {
+            $query = "SELECT r.*, c.nombre_cliente 
+                      FROM " . $this->table_name . " r
+                      LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
+                      JOIN relaciones rel ON c.id_cliente = rel.id_cliente
+                      WHERE rel.id_usuario = ?
+                      ORDER BY c.nombre_cliente ASC, r.nombre_red ASC";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+        }
+        
+        $stmt->execute();
+        return $stmt;
+    }
 
     // Read all social networks for a client
     public function readByClient($id_cliente) {
@@ -87,7 +130,7 @@ public function read($user_id, $is_admin) {
                   ORDER BY nombre_red ASC";
 
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $id_cliente);
+        $stmt->bindParam(1, $id_cliente, PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt;
@@ -100,7 +143,7 @@ public function read($user_id, $is_admin) {
                   LIMIT 0,1";
 
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $this->id_red);
+        $stmt->bindParam(1, $this->id_red, PDO::PARAM_INT);
         $stmt->execute();
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -124,52 +167,41 @@ public function read($user_id, $is_admin) {
     // Update social network
     public function update() {
         $query = "UPDATE " . $this->table_name . " 
-                  SET tipo_red = :tipo_red, 
-                      nombre_red = :nombre_red, 
-                      usuario_red = :usuario_red, 
-                      contrasena_red = :contrasena_red,
-                      url_red = :url_red,
-                      notas = :notas
-                  WHERE id_red = :id_red";
+                  SET tipo_red = ?, 
+                      nombre_red = ?, 
+                      usuario_red = ?, 
+                      contrasena_red = ?,
+                      url_red = ?,
+                      notas = ?
+                  WHERE id_red = ?";
 
         $stmt = $this->conn->prepare($query);
 
-        // Sanitize and bind values
+        // Sanitize values
         $this->tipo_red = htmlspecialchars(strip_tags($this->tipo_red));
         $this->nombre_red = htmlspecialchars(strip_tags($this->nombre_red));
         $this->usuario_red = htmlspecialchars(strip_tags($this->usuario_red));
         $this->contrasena_red = htmlspecialchars(strip_tags($this->contrasena_red));
         $this->url_red = htmlspecialchars(strip_tags($this->url_red));
         $this->notas = htmlspecialchars(strip_tags($this->notas));
-        $this->id_red = htmlspecialchars(strip_tags($this->id_red));
 
-        $stmt->bindParam(":tipo_red", $this->tipo_red);
-        $stmt->bindParam(":nombre_red", $this->nombre_red);
-        $stmt->bindParam(":usuario_red", $this->usuario_red);
-        $stmt->bindParam(":contrasena_red", $this->contrasena_red);
-        $stmt->bindParam(":url_red", $this->url_red);
-        $stmt->bindParam(":notas", $this->notas);
-        $stmt->bindParam(":id_red", $this->id_red);
+        $stmt->bindParam(1, $this->tipo_red);
+        $stmt->bindParam(2, $this->nombre_red);
+        $stmt->bindParam(3, $this->usuario_red);
+        $stmt->bindParam(4, $this->contrasena_red);
+        $stmt->bindParam(5, $this->url_red);
+        $stmt->bindParam(6, $this->notas);
+        $stmt->bindParam(7, $this->id_red, PDO::PARAM_INT);
 
-        if($stmt->execute()) {
-            return true;
-        }
-
-        return false;
+        return $stmt->execute();
     }
 
     // Delete social network
     public function delete() {
         $query = "DELETE FROM " . $this->table_name . " WHERE id_red = ?";
-
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $this->id_red);
-
-        if($stmt->execute()) {
-            return true;
-        }
-
-        return false;
+        $stmt->bindParam(1, $this->id_red, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     // Read all social networks
@@ -181,13 +213,11 @@ public function read($user_id, $is_admin) {
 
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
-
         return $stmt;
     }
 
-    // Modificar el método getNetworkTypes para obtener tipos de la base de datos y permitir agregar nuevos
+    // Get network types
     public function getNetworkTypes() {
-        // Primero intentamos obtener los tipos de la base de datos
         $query = "SELECT DISTINCT tipo_red, 
                   CASE 
                     WHEN tipo_red = 'Facebook' THEN 'fa-facebook' 
@@ -232,7 +262,7 @@ public function read($user_id, $is_admin) {
             ];
         }
         
-        // Agregar los tipos predeterminados si no existen en la base de datos
+        // Default types if none exist in database
         $default_types = [
             ['nombre_tipo' => 'Facebook', 'icono' => 'fa-facebook', 'color' => '#4267B2'],
             ['nombre_tipo' => 'Instagram', 'icono' => 'fa-instagram', 'color' => '#E1306C'],
@@ -242,7 +272,6 @@ public function read($user_id, $is_admin) {
             ['nombre_tipo' => 'TikTok', 'icono' => 'fa-tiktok', 'color' => '#000000']
         ];
         
-        // Verificar si cada tipo predeterminado ya existe en los resultados
         foreach ($default_types as $default_type) {
             $exists = false;
             foreach ($types as $type) {
@@ -252,13 +281,11 @@ public function read($user_id, $is_admin) {
                 }
             }
             
-            // Si no existe, agregarlo a la lista
             if (!$exists) {
                 $types[] = $default_type;
             }
         }
         
-        // Ordenar por nombre
         usort($types, function($a, $b) {
             return strcmp($a['nombre_tipo'], $b['nombre_tipo']);
         });
@@ -266,7 +293,7 @@ public function read($user_id, $is_admin) {
         return $types;
     }
 
-    // Agregar método para obtener información de un tipo de red social
+    // Get network type info
     public function getNetworkTypeInfo($tipo_red) {
         $icons = [
             'Facebook' => ['icono' => 'fa-facebook', 'color' => '#4267B2'],

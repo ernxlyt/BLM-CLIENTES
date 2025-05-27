@@ -76,7 +76,7 @@ include 'includes/layout_header.php';
                         </div>
                         <?php echo $payment['nombre_cliente']; ?>
                     </td>
-                    <td><?php echo date('d/m', strtotime($payment['fecha_pago'])); ?></td>
+                    <td><?php echo date('d', strtotime($payment['fecha_pago'])); ?></td>
                     <td>
                     <?php 
                         // Verificar si la fecha de pago es hoy o mañana

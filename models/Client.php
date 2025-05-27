@@ -19,10 +19,76 @@ class Client {
         $this->conn = $db;
     }
 
-    // Create client
     public function create() {
-        // Código existente...
-        // (Mantengo el resto del código igual)
+        $query = "INSERT INTO " . $this->table_name . " 
+            (nombre_cliente, fecha_inicio, cumpleaños, fecha_pago, estado, id_plan, id_empresa)
+            VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        $stmt = $this->conn->prepare($query);
+
+        // Sanitizar valores
+        $this->nombre_cliente = htmlspecialchars(strip_tags($this->nombre_cliente));
+        $this->fecha_inicio = htmlspecialchars(strip_tags($this->fecha_inicio));
+        $this->cumpleaños = htmlspecialchars(strip_tags($this->cumpleaños));
+        $this->fecha_pago = htmlspecialchars(strip_tags($this->fecha_pago));
+        $this->estado = htmlspecialchars(strip_tags($this->estado));
+        
+        // Preparar valores para id_plan e id_empresa (pueden ser NULL)
+        $id_plan = !empty($this->id_plan) ? $this->id_plan : null;
+        $id_empresa = !empty($this->id_empresa) ? $this->id_empresa : null;
+
+        // Bind values usando posiciones numéricas
+        $stmt->bindParam(1, $this->nombre_cliente);
+        $stmt->bindParam(2, $this->fecha_inicio);
+        $stmt->bindParam(3, $this->cumpleaños);
+        $stmt->bindParam(4, $this->fecha_pago);
+        $stmt->bindParam(5, $this->estado);
+        $stmt->bindParam(6, $id_plan);
+        $stmt->bindParam(7, $id_empresa);
+
+        if ($stmt->execute()) {
+            return true;
+        }
+        
+        // Para debugging, puedes descomentar esta línea:
+        // print_r($stmt->errorInfo());
+        
+        return false;
+    }
+
+    // Método alternativo usando parámetros nombrados (si prefieres esta sintaxis)
+    public function createWithNamedParams() {
+        $query = "INSERT INTO " . $this->table_name . " 
+            (nombre_cliente, fecha_inicio, cumpleaños, fecha_pago, estado, id_plan, id_empresa)
+            VALUES (:nombre_cliente, :fecha_inicio, :cumpleanos, :fecha_pago, :estado, :id_plan, :id_empresa)";
+
+        $stmt = $this->conn->prepare($query);
+
+        // Sanitizar valores
+        $this->nombre_cliente = htmlspecialchars(strip_tags($this->nombre_cliente));
+        $this->fecha_inicio = htmlspecialchars(strip_tags($this->fecha_inicio));
+        $this->cumpleaños = htmlspecialchars(strip_tags($this->cumpleaños));
+        $this->fecha_pago = htmlspecialchars(strip_tags($this->fecha_pago));
+        $this->estado = htmlspecialchars(strip_tags($this->estado));
+        
+        // Preparar valores para id_plan e id_empresa (pueden ser NULL)
+        $id_plan = !empty($this->id_plan) ? $this->id_plan : null;
+        $id_empresa = !empty($this->id_empresa) ? $this->id_empresa : null;
+
+        // Bind values usando nombres (nota: cambié :cumpleaños por :cumpleanos para evitar problemas con caracteres especiales)
+        $stmt->bindParam(':nombre_cliente', $this->nombre_cliente);
+        $stmt->bindParam(':fecha_inicio', $this->fecha_inicio);
+        $stmt->bindParam(':cumpleanos', $this->cumpleaños);
+        $stmt->bindParam(':fecha_pago', $this->fecha_pago);
+        $stmt->bindParam(':estado', $this->estado);
+        $stmt->bindParam(':id_plan', $id_plan);
+        $stmt->bindParam(':id_empresa', $id_empresa);
+
+        if ($stmt->execute()) {
+            return true;
+        }
+        
+        return false;
     }
 
     // Read all clients
@@ -102,10 +168,9 @@ class Client {
         $this->fecha_inicio = htmlspecialchars(strip_tags($this->fecha_inicio));
         $this->cumpleaños = htmlspecialchars(strip_tags($this->cumpleaños));
         $this->fecha_pago = htmlspecialchars(strip_tags($this->fecha_pago));
-        $this->estado = htmlspecialchars(strip_tags($this->estado)); // Nuevo: Estado del cliente
+        $this->estado = htmlspecialchars(strip_tags($this->estado));
         $this->id_cliente = htmlspecialchars(strip_tags($this->id_cliente));
         
-        // Consulta básica para actualizar campos obligatorios
         $query = "UPDATE " . $this->table_name . " 
                   SET nombre_cliente = ?, 
                       fecha_inicio = ?, 
@@ -127,7 +192,7 @@ class Client {
         $stmt->bindParam(2, $this->fecha_inicio);
         $stmt->bindParam(3, $this->cumpleaños);
         $stmt->bindParam(4, $this->fecha_pago);
-        $stmt->bindParam(5, $this->estado); // Nuevo: Estado del cliente
+        $stmt->bindParam(5, $this->estado);
         $stmt->bindParam(6, $id_plan);
         $stmt->bindParam(7, $id_empresa);
         $stmt->bindParam(8, $this->id_cliente);
@@ -141,9 +206,9 @@ class Client {
 
     // Delete client
     public function delete() {
-        $query = "DELETE FROM " . $this->table_name . " WHERE id_cliente = :id_cliente";
+        $query = "DELETE FROM " . $this->table_name . " WHERE id_cliente = ?";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":id_cliente", $this->id_cliente, PDO::PARAM_INT);
+        $stmt->bindParam(1, $this->id_cliente, PDO::PARAM_INT);
 
         return $stmt->execute();
     }
