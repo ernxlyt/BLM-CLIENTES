@@ -14,15 +14,14 @@ class Client {
     public $nombre_empresa; 
     public $rubro_empresa;
     public $estado;
-    public $pais;        // ✅ AGREGAR ESTA LÍNEA
-    public $provincia;   // ✅ AGREGAR ESTA LÍNEA
+    public $pais;
+    public $provincia;
 
     public function __construct($db) {
         $this->conn = $db;
     }
 
     public function create() {
-        // ✅ CAMBIAR ESTA CONSULTA - AGREGAR pais, provincia
         $query = "INSERT INTO " . $this->table_name . " 
             (nombre_cliente, fecha_inicio, cumpleaños, fecha_pago, estado, id_plan, id_empresa, pais, provincia)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -36,7 +35,6 @@ class Client {
         $this->fecha_pago = htmlspecialchars(strip_tags($this->fecha_pago));
         $this->estado = htmlspecialchars(strip_tags($this->estado));
         
-        // ✅ AGREGAR ESTAS LÍNEAS
         $this->pais = $this->pais ? htmlspecialchars(strip_tags($this->pais)) : null;
         $this->provincia = $this->provincia ? htmlspecialchars(strip_tags($this->provincia)) : null;
         
@@ -44,7 +42,6 @@ class Client {
         $id_plan = !empty($this->id_plan) ? $this->id_plan : null;
         $id_empresa = !empty($this->id_empresa) ? $this->id_empresa : null;
 
-        // ✅ CAMBIAR ESTOS BIND PARAMS - AGREGAR 2 MÁS (9 total en lugar de 7)
         $stmt->bindParam(1, $this->nombre_cliente);
         $stmt->bindParam(2, $this->fecha_inicio);
         $stmt->bindParam(3, $this->cumpleaños);
@@ -52,8 +49,8 @@ class Client {
         $stmt->bindParam(5, $this->estado);
         $stmt->bindParam(6, $id_plan);
         $stmt->bindParam(7, $id_empresa);
-        $stmt->bindParam(8, $this->pais);        // ✅ AGREGAR ESTA LÍNEA
-        $stmt->bindParam(9, $this->provincia);   // ✅ AGREGAR ESTA LÍNEA
+        $stmt->bindParam(8, $this->pais);
+        $stmt->bindParam(9, $this->provincia);
 
         if ($stmt->execute()) {
             return true;
@@ -62,15 +59,20 @@ class Client {
         return false;
     }
 
-    // Read all clients
-    public function read($user_id, $is_admin) {
+    // Read all clients with pagination
+    public function read($user_id, $is_admin, $page = 1, $records_per_page = 15) {
+        $offset = ($page - 1) * $records_per_page;
+        
         if($is_admin) {
             $query = "SELECT c.*, p.nombre_plan, e.nombre_empresa, e.rubro as rubro_empresa
                       FROM " . $this->table_name . " c
                       LEFT JOIN planes p ON c.id_plan = p.id_plan
                       LEFT JOIN empresas e ON c.id_empresa = e.id_empresa
-                      ORDER BY c.id_cliente DESC";
+                      ORDER BY c.id_cliente DESC
+                      LIMIT ? OFFSET ?";
             $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(1, $records_per_page, PDO::PARAM_INT);
+            $stmt->bindParam(2, $offset, PDO::PARAM_INT);
         } else {
             $query = "SELECT c.*, p.nombre_plan, e.nombre_empresa, e.rubro as rubro_empresa
                       FROM " . $this->table_name . " c
@@ -78,13 +80,139 @@ class Client {
                       LEFT JOIN empresas e ON c.id_empresa = e.id_empresa
                       JOIN relaciones r ON c.id_cliente = r.id_cliente
                       WHERE r.id_usuario = ?
-                      ORDER BY c.id_cliente DESC";
+                      ORDER BY c.id_cliente DESC
+                      LIMIT ? OFFSET ?";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(1, $user_id);
+            $stmt->bindParam(2, $records_per_page, PDO::PARAM_INT);
+            $stmt->bindParam(3, $offset, PDO::PARAM_INT);
         }
 
         $stmt->execute();
         return $stmt;
+    }
+
+    // Search clients with pagination
+    public function search($user_id, $is_admin, $search_term, $page = 1, $records_per_page = 15) {
+        $offset = ($page - 1) * $records_per_page;
+        $search_term = "%{$search_term}%";
+        
+        if($is_admin) {
+            $query = "SELECT c.*, p.nombre_plan, e.nombre_empresa, e.rubro as rubro_empresa
+                      FROM " . $this->table_name . " c
+                      LEFT JOIN planes p ON c.id_plan = p.id_plan
+                      LEFT JOIN empresas e ON c.id_empresa = e.id_empresa
+                      WHERE (c.nombre_cliente LIKE ? 
+                         OR e.nombre_empresa LIKE ? 
+                         OR c.pais LIKE ? 
+                         OR c.provincia LIKE ? 
+                         OR p.nombre_plan LIKE ? 
+                         OR c.estado LIKE ?)
+                      ORDER BY c.id_cliente DESC
+                      LIMIT ? OFFSET ?";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(1, $search_term);
+            $stmt->bindParam(2, $search_term);
+            $stmt->bindParam(3, $search_term);
+            $stmt->bindParam(4, $search_term);
+            $stmt->bindParam(5, $search_term);
+            $stmt->bindParam(6, $search_term);
+            $stmt->bindParam(7, $records_per_page, PDO::PARAM_INT);
+            $stmt->bindParam(8, $offset, PDO::PARAM_INT);
+        } else {
+            $query = "SELECT c.*, p.nombre_plan, e.nombre_empresa, e.rubro as rubro_empresa
+                      FROM " . $this->table_name . " c
+                      LEFT JOIN planes p ON c.id_plan = p.id_plan
+                      LEFT JOIN empresas e ON c.id_empresa = e.id_empresa
+                      JOIN relaciones r ON c.id_cliente = r.id_cliente
+                      WHERE r.id_usuario = ?
+                        AND (c.nombre_cliente LIKE ? 
+                         OR e.nombre_empresa LIKE ? 
+                         OR c.pais LIKE ? 
+                         OR c.provincia LIKE ? 
+                         OR p.nombre_plan LIKE ? 
+                         OR c.estado LIKE ?)
+                      ORDER BY c.id_cliente DESC
+                      LIMIT ? OFFSET ?";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(1, $user_id);
+            $stmt->bindParam(2, $search_term);
+            $stmt->bindParam(3, $search_term);
+            $stmt->bindParam(4, $search_term);
+            $stmt->bindParam(5, $search_term);
+            $stmt->bindParam(6, $search_term);
+            $stmt->bindParam(7, $search_term);
+            $stmt->bindParam(8, $records_per_page, PDO::PARAM_INT);
+            $stmt->bindParam(9, $offset, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+        return $stmt;
+    }
+
+    // Count total clients for pagination
+    public function countClients($user_id, $is_admin, $search_term = '') {
+        if (!empty($search_term)) {
+            $search_term = "%{$search_term}%";
+            
+            if($is_admin) {
+                $query = "SELECT COUNT(*) as total 
+                          FROM " . $this->table_name . " c
+                          LEFT JOIN planes p ON c.id_plan = p.id_plan
+                          LEFT JOIN empresas e ON c.id_empresa = e.id_empresa
+                          WHERE (c.nombre_cliente LIKE ? 
+                             OR e.nombre_empresa LIKE ? 
+                             OR c.pais LIKE ? 
+                             OR c.provincia LIKE ? 
+                             OR p.nombre_plan LIKE ? 
+                             OR c.estado LIKE ?)";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(1, $search_term);
+                $stmt->bindParam(2, $search_term);
+                $stmt->bindParam(3, $search_term);
+                $stmt->bindParam(4, $search_term);
+                $stmt->bindParam(5, $search_term);
+                $stmt->bindParam(6, $search_term);
+            } else {
+                $query = "SELECT COUNT(DISTINCT c.id_cliente) as total 
+                          FROM " . $this->table_name . " c
+                          LEFT JOIN planes p ON c.id_plan = p.id_plan
+                          LEFT JOIN empresas e ON c.id_empresa = e.id_empresa
+                          JOIN relaciones r ON c.id_cliente = r.id_cliente
+                          WHERE r.id_usuario = ?
+                            AND (c.nombre_cliente LIKE ? 
+                             OR e.nombre_empresa LIKE ? 
+                             OR c.pais LIKE ? 
+                             OR c.provincia LIKE ? 
+                             OR p.nombre_plan LIKE ? 
+                             OR c.estado LIKE ?)";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(1, $user_id);
+                $stmt->bindParam(2, $search_term);
+                $stmt->bindParam(3, $search_term);
+                $stmt->bindParam(4, $search_term);
+                $stmt->bindParam(5, $search_term);
+                $stmt->bindParam(6, $search_term);
+                $stmt->bindParam(7, $search_term);
+            }
+        } else {
+            if($is_admin) {
+                $query = "SELECT COUNT(*) as total FROM " . $this->table_name;
+                $stmt = $this->conn->prepare($query);
+            } else {
+                $query = "SELECT COUNT(DISTINCT c.id_cliente) as total 
+                          FROM " . $this->table_name . " c
+                          JOIN relaciones r ON c.id_cliente = r.id_cliente
+                          WHERE r.id_usuario = ?";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(1, $user_id);
+            }
+        }
+        
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $row['total'];
     }
 
     // Read one client
@@ -126,8 +254,6 @@ class Client {
             $this->id_empresa = $row['id_empresa'];
             $this->nombre_empresa = $row['nombre_empresa'];
             $this->rubro_empresa = $row['rubro_empresa'];
-            
-            // ✅ AGREGAR ESTAS LÍNEAS
             $this->pais = $row['pais'] ?? null;
             $this->provincia = $row['provincia'] ?? null;
             
@@ -147,11 +273,9 @@ class Client {
         $this->estado = htmlspecialchars(strip_tags($this->estado));
         $this->id_cliente = htmlspecialchars(strip_tags($this->id_cliente));
         
-        // ✅ AGREGAR ESTAS LÍNEAS
         $this->pais = $this->pais ? htmlspecialchars(strip_tags($this->pais)) : null;
         $this->provincia = $this->provincia ? htmlspecialchars(strip_tags($this->provincia)) : null;
         
-        // ✅ CAMBIAR ESTA CONSULTA - AGREGAR pais, provincia
         $query = "UPDATE " . $this->table_name . " 
                   SET nombre_cliente = ?, 
                       fecha_inicio = ?, 
@@ -170,7 +294,6 @@ class Client {
         $id_plan = !empty($this->id_plan) ? $this->id_plan : null;
         $id_empresa = !empty($this->id_empresa) ? $this->id_empresa : null;
         
-        // ✅ CAMBIAR ESTOS BIND PARAMS - AGREGAR 2 MÁS (10 total en lugar de 8)
         $stmt->bindParam(1, $this->nombre_cliente);
         $stmt->bindParam(2, $this->fecha_inicio);
         $stmt->bindParam(3, $this->cumpleaños);
@@ -178,9 +301,9 @@ class Client {
         $stmt->bindParam(5, $this->estado);
         $stmt->bindParam(6, $id_plan);
         $stmt->bindParam(7, $id_empresa);
-        $stmt->bindParam(8, $this->pais);        // ✅ AGREGAR ESTA LÍNEA
-        $stmt->bindParam(9, $this->provincia);   // ✅ AGREGAR ESTA LÍNEA
-        $stmt->bindParam(10, $this->id_cliente); // ✅ CAMBIAR DE 8 A 10
+        $stmt->bindParam(8, $this->pais);
+        $stmt->bindParam(9, $this->provincia);
+        $stmt->bindParam(10, $this->id_cliente);
         
         if ($stmt->execute()) {
             return true;
@@ -359,26 +482,6 @@ class Client {
         });
         
         return $upcoming_birthdays;
-    }
-
-    // Count total clients
-    public function countClients($user_id, $is_admin) {
-        if($is_admin) {
-            $query = "SELECT COUNT(*) as total FROM " . $this->table_name;
-            $stmt = $this->conn->prepare($query);
-        } else {
-            $query = "SELECT COUNT(DISTINCT c.id_cliente) as total 
-                      FROM " . $this->table_name . " c
-                      JOIN relaciones r ON c.id_cliente = r.id_cliente
-                      WHERE r.id_usuario = ?";
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(1, $user_id);
-        }
-        
-        $stmt->execute();
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        return $row['total'];
     }
     
     // Get recent clients

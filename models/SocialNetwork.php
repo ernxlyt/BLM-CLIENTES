@@ -100,27 +100,147 @@ class SocialNetwork {
         return $this->create();
     }
     
-    // Read method with user permissions
-    public function read($user_id, $is_admin) {
+    // Read method with user permissions and pagination
+    public function read($user_id, $is_admin, $page = 1, $records_per_page = 15) {
+        $offset = ($page - 1) * $records_per_page;
+        
         if($is_admin) {
             $query = "SELECT r.*, c.nombre_cliente 
                       FROM " . $this->table_name . " r
                       LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
-                      ORDER BY c.nombre_cliente ASC, r.nombre_red ASC";
+                      ORDER BY c.nombre_cliente ASC, r.nombre_red ASC
+                      LIMIT ? OFFSET ?";
             $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(1, $records_per_page, PDO::PARAM_INT);
+            $stmt->bindParam(2, $offset, PDO::PARAM_INT);
         } else {
             $query = "SELECT r.*, c.nombre_cliente 
                       FROM " . $this->table_name . " r
                       LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
                       JOIN relaciones rel ON c.id_cliente = rel.id_cliente
                       WHERE rel.id_usuario = ?
-                      ORDER BY c.nombre_cliente ASC, r.nombre_red ASC";
+                      ORDER BY c.nombre_cliente ASC, r.nombre_red ASC
+                      LIMIT ? OFFSET ?";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+            $stmt->bindParam(2, $records_per_page, PDO::PARAM_INT);
+            $stmt->bindParam(3, $offset, PDO::PARAM_INT);
         }
         
         $stmt->execute();
         return $stmt;
+    }
+
+    // Search social networks with pagination
+    public function search($user_id, $is_admin, $search_term, $page = 1, $records_per_page = 15) {
+        $offset = ($page - 1) * $records_per_page;
+        $search_term = "%{$search_term}%";
+        
+        if($is_admin) {
+            $query = "SELECT r.*, c.nombre_cliente 
+                      FROM " . $this->table_name . " r
+                      LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
+                      WHERE (r.tipo_red LIKE ? 
+                         OR r.nombre_red LIKE ? 
+                         OR c.nombre_cliente LIKE ? 
+                         OR r.usuario_red LIKE ? 
+                         OR r.url_red LIKE ?)
+                      ORDER BY c.nombre_cliente ASC, r.nombre_red ASC
+                      LIMIT ? OFFSET ?";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(1, $search_term);
+            $stmt->bindParam(2, $search_term);
+            $stmt->bindParam(3, $search_term);
+            $stmt->bindParam(4, $search_term);
+            $stmt->bindParam(5, $search_term);
+            $stmt->bindParam(6, $records_per_page, PDO::PARAM_INT);
+            $stmt->bindParam(7, $offset, PDO::PARAM_INT);
+        } else {
+            $query = "SELECT r.*, c.nombre_cliente 
+                      FROM " . $this->table_name . " r
+                      LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
+                      JOIN relaciones rel ON c.id_cliente = rel.id_cliente
+                      WHERE rel.id_usuario = ?
+                        AND (r.tipo_red LIKE ? 
+                         OR r.nombre_red LIKE ? 
+                         OR c.nombre_cliente LIKE ? 
+                         OR r.usuario_red LIKE ? 
+                         OR r.url_red LIKE ?)
+                      ORDER BY c.nombre_cliente ASC, r.nombre_red ASC
+                      LIMIT ? OFFSET ?";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+            $stmt->bindParam(2, $search_term);
+            $stmt->bindParam(3, $search_term);
+            $stmt->bindParam(4, $search_term);
+            $stmt->bindParam(5, $search_term);
+            $stmt->bindParam(6, $search_term);
+            $stmt->bindParam(7, $records_per_page, PDO::PARAM_INT);
+            $stmt->bindParam(8, $offset, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+        return $stmt;
+    }
+
+    // Count total social networks for pagination
+    public function countSocialNetworks($user_id, $is_admin, $search_term = '') {
+        if (!empty($search_term)) {
+            $search_term = "%{$search_term}%";
+            
+            if($is_admin) {
+                $query = "SELECT COUNT(*) as total 
+                          FROM " . $this->table_name . " r
+                          LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
+                          WHERE (r.tipo_red LIKE ? 
+                             OR r.nombre_red LIKE ? 
+                             OR c.nombre_cliente LIKE ? 
+                             OR r.usuario_red LIKE ? 
+                             OR r.url_red LIKE ?)";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(1, $search_term);
+                $stmt->bindParam(2, $search_term);
+                $stmt->bindParam(3, $search_term);
+                $stmt->bindParam(4, $search_term);
+                $stmt->bindParam(5, $search_term);
+            } else {
+                $query = "SELECT COUNT(*) as total 
+                          FROM " . $this->table_name . " r
+                          LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
+                          JOIN relaciones rel ON c.id_cliente = rel.id_cliente
+                          WHERE rel.id_usuario = ?
+                            AND (r.tipo_red LIKE ? 
+                             OR r.nombre_red LIKE ? 
+                             OR c.nombre_cliente LIKE ? 
+                             OR r.usuario_red LIKE ? 
+                             OR r.url_red LIKE ?)";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+                $stmt->bindParam(2, $search_term);
+                $stmt->bindParam(3, $search_term);
+                $stmt->bindParam(4, $search_term);
+                $stmt->bindParam(5, $search_term);
+                $stmt->bindParam(6, $search_term);
+            }
+        } else {
+            if($is_admin) {
+                $query = "SELECT COUNT(*) as total FROM " . $this->table_name;
+                $stmt = $this->conn->prepare($query);
+            } else {
+                $query = "SELECT COUNT(*) as total 
+                          FROM " . $this->table_name . " r
+                          LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
+                          JOIN relaciones rel ON c.id_cliente = rel.id_cliente
+                          WHERE rel.id_usuario = ?";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+            }
+        }
+        
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $row['total'];
     }
 
     // Read all social networks for a client
@@ -243,7 +363,7 @@ class SocialNetwork {
                     WHEN tipo_red = 'Snapchat' THEN '#FFFC00' 
                     WHEN tipo_red = 'WhatsApp' THEN '#25D366' 
                     WHEN tipo_red = 'Telegram' THEN '#0088cc' 
-                    ELSE '#10b981' 
+                    ELSE '#28a745' 
                   END as color
                   FROM " . $this->table_name . "
                   WHERE tipo_red IS NOT NULL AND tipo_red != ''
@@ -308,7 +428,7 @@ class SocialNetwork {
             'Telegram' => ['icono' => 'fa-telegram', 'color' => '#0088cc']
         ];
         
-        return isset($icons[$tipo_red]) ? $icons[$tipo_red] : ['icono' => 'fa-globe', 'color' => '#10b981'];
+        return isset($icons[$tipo_red]) ? $icons[$tipo_red] : ['icono' => 'fa-globe', 'color' => '#28a745'];
     }
 }
 ?>
