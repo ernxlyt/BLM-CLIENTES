@@ -83,6 +83,47 @@ $page_title = "Detalles del Cliente";
 include 'includes/layout_header.php';
 ?>
 
+<style>
+.location-card {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2px solid #0ea5e9;
+    border-radius: 12px;
+}
+
+.location-icon {
+    color: #0ea5e9;
+    font-size: 1.2em;
+}
+
+.location-badge {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    border: 1px solid #0ea5e9;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.success-message {
+    background-color: #d1fae5;
+    border: 1px solid #10b981;
+    color: #065f46;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+</style>
+
+<?php if(isset($_GET['success']) && $_GET['success'] == '1'): ?>
+<div class="success-message">
+    <i class="fas fa-check-circle mr-2"></i>
+    Cliente actualizado exitosamente.
+</div>
+<?php endif; ?>
+
 <div class="card">
     <div class="card-header">
         <h2 class="card-title">Detalles del Cliente</h2>
@@ -99,55 +140,143 @@ include 'includes/layout_header.php';
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <!-- Nombre -->
             <div class="bg-white p-4 rounded-lg shadow-sm border">
-                <h4 class="text-gray-700 font-medium mb-2">Nombre</h4>
-                <p class="text-gray-900"><?php echo $client->nombre_cliente; ?></p>
+                <h4 class="text-gray-700 font-medium mb-2">
+                    <i class="fas fa-user mr-2 text-gray-500"></i>Nombre
+                </h4>
+                <p class="text-gray-900 font-semibold"><?php echo htmlspecialchars($client->nombre_cliente); ?></p>
             </div>
             
             <!-- Fecha de Inicio -->
             <div class="bg-white p-4 rounded-lg shadow-sm border">
-                <h4 class="text-gray-700 font-medium mb-2">Fecha de Inicio</h4>
+                <h4 class="text-gray-700 font-medium mb-2">
+                    <i class="fas fa-calendar-plus mr-2 text-gray-500"></i>Fecha de Inicio
+                </h4>
                 <p class="text-gray-900"><?php echo date('d/m/Y', strtotime($client->fecha_inicio)); ?></p>
             </div>
             
             <!-- Cumpleaños -->
             <div class="bg-white p-4 rounded-lg shadow-sm border">
-                <h4 class="text-gray-700 font-medium mb-2">Cumpleaños</h4>
+                <h4 class="text-gray-700 font-medium mb-2">
+                    <i class="fas fa-birthday-cake mr-2 text-gray-500"></i>Cumpleaños
+                </h4>
                 <p class="text-gray-900"><?php echo date('d/m/Y', strtotime($client->cumpleaños)); ?></p>
             </div>
             
             <!-- Fecha de Pago -->
             <div class="bg-white p-4 rounded-lg shadow-sm border">
-                <h4 class="text-gray-700 font-medium mb-2">Fecha de Pago</h4>
+                <h4 class="text-gray-700 font-medium mb-2">
+                    <i class="fas fa-credit-card mr-2 text-gray-500"></i>Fecha de Pago
+                </h4>
                 <p class="text-gray-900"><?php echo date('d/m/Y', strtotime($client->fecha_pago)); ?></p>
             </div>
             
             <!-- Estado -->
             <div class="bg-white p-4 rounded-lg shadow-sm border">
-                <h4 class="text-gray-700 font-medium mb-2">Estado</h4>
+                <h4 class="text-gray-700 font-medium mb-2">
+                    <i class="fas fa-toggle-on mr-2 text-gray-500"></i>Estado
+                </h4>
                 <?php if(strtolower($client->estado) === 'activo'): ?>
-                    <span class="bg-green-500 text-white px-3 py-1 rounded-md text-sm">Activo</span>
+                    <span class="bg-green-500 text-white px-3 py-1 rounded-md text-sm">
+                        <i class="fas fa-check-circle mr-1"></i>Activo
+                    </span>
                 <?php else: ?>  
-                    <span class="bg-red-500 text-white px-3 py-1 rounded-md text-sm">Inactivo</span>
+                    <span class="bg-red-500 text-white px-3 py-1 rounded-md text-sm">
+                        <i class="fas fa-times-circle mr-1"></i>Inactivo
+                    </span>
                 <?php endif; ?>
             </div>
             
             <!-- Plan -->
             <div class="bg-white p-4 rounded-lg shadow-sm border">
-                <h4 class="text-gray-700 font-medium mb-2">Plan Asignado</h4>
-                <p class="text-gray-900"><?php echo $client->nombre_plan ? $client->nombre_plan : 'No asignado'; ?></p>
+                <h4 class="text-gray-700 font-medium mb-2">
+                    <i class="fas fa-box mr-2 text-gray-500"></i>Plan Asignado
+                </h4>
+                <p class="text-gray-900"><?php echo $client->nombre_plan ? htmlspecialchars($client->nombre_plan) : 'No asignado'; ?></p>
             </div>
             
             <!-- Empresa -->
-            <div class="bg-white p-4 rounded-lg shadow-sm border">
-                <h4 class="text-gray-700 font-medium mb-2">Empresa</h4>
-                <p class="text-gray-900"><?php echo $client->nombre_empresa ? $client->nombre_empresa . ' (' . $client->rubro_empresa . ')' : 'No asignada'; ?></p>
+            <div class="bg-white p-4 rounded-lg shadow-sm border col-span-1 md:col-span-3">
+                <h4 class="text-gray-700 font-medium mb-2">
+                    <i class="fas fa-building mr-2 text-gray-500"></i>Empresa
+                </h4>
+                <p class="text-gray-900">
+                    <?php echo $client->nombre_empresa ? htmlspecialchars($client->nombre_empresa) . ' (' . htmlspecialchars($client->rubro_empresa) . ')' : 'No asignada'; ?>
+                </p>
             </div>
+        </div>
+
+        <!-- Sección de Ubicación Geográfica -->
+        <div class="location-card p-6 mb-6">
+            <div class="flex items-center mb-4">
+                <i class="fas fa-map-marked-alt location-icon mr-3"></i>
+                <h3 class="text-lg font-semibold text-gray-800">Ubicación Geográfica</h3>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- País -->
+                <div class="bg-white p-4 rounded-lg border border-blue-200">
+                    <h4 class="text-gray-700 font-medium mb-3">
+                        <i class="fas fa-globe location-icon mr-2"></i>País
+                    </h4>
+                    <?php if (!empty($client->pais)): ?>
+                        <div class="location-badge">
+                            <i class="fas fa-flag"></i>
+                            <?php echo htmlspecialchars($client->pais); ?>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-gray-500 italic">
+                            <i class="fas fa-question-circle mr-2"></i>No especificado
+                        </p>
+                    <?php endif; ?>
+                </div>
+                
+                <!-- Ubicación (Provincia/Estado) -->
+                <div class="bg-white p-4 rounded-lg border border-blue-200">
+                    <h4 class="text-gray-700 font-medium mb-3">
+                        <i class="fas fa-map-marker-alt location-icon mr-2"></i>Ubicación
+                    </h4>
+                    <?php if (!empty($client->provincia)): ?>
+                        <div class="location-badge">
+                            <i class="fas fa-map-pin"></i>
+                            <?php echo htmlspecialchars($client->provincia); ?>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-gray-500 italic">
+                            <i class="fas fa-question-circle mr-2"></i>No especificado
+                        </p>
+                    <?php endif; ?>
+                </div>
+            </div>
+            
+            <!-- Información adicional de ubicación -->
+            <?php if (!empty($client->pais) && !empty($client->provincia)): ?>
+            <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p class="text-sm text-blue-800">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <strong>Ubicación completa:</strong> 
+                    <?php echo htmlspecialchars($client->provincia) . ', ' . htmlspecialchars($client->pais); ?>
+                </p>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Botón para editar ubicación (solo para administradores) -->
+            <?php if(isAdmin()): ?>
+            <div class="mt-4 text-center">
+                <a href="client-form.php?id=<?php echo $client->id_cliente; ?>#location-section" 
+                   class="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                    <i class="fas fa-edit mr-2"></i>
+                    Editar Ubicación
+                </a>
+            </div>
+            <?php endif; ?>
         </div>
         
         <!-- Redes Sociales -->
         <div class="mb-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold">Redes Sociales</h3>
+                <h3 class="text-lg font-semibold">
+                    <i class="fas fa-share-alt mr-2 text-gray-600"></i>Redes Sociales
+                </h3>
                 <button onclick="toggleForm('social-network-form')" class="btn btn-primary">
                     <i class="fas fa-plus mr-2"></i> Agregar Red Social
                 </button>
@@ -230,8 +359,8 @@ include 'includes/layout_header.php';
                 <div class="bg-white border rounded-lg shadow-sm overflow-hidden">
                     <div class="p-4 border-b flex items-center">
                         <div class="flex-1">
-                            <h4 class="font-bold"><?php echo $row['nombre_red']; ?></h4>
-                            <p class="text-sm text-gray-600"><?php echo $row['tipo_red']; ?></p>
+                            <h4 class="font-bold"><?php echo htmlspecialchars($row['nombre_red']); ?></h4>
+                            <p class="text-sm text-gray-600"><?php echo htmlspecialchars($row['tipo_red']); ?></p>
                         </div>
                         <div class="flex">
                             <button onclick="editSocialNetwork(<?php echo htmlspecialchars(json_encode($row)); ?>)" class="btn btn-icon btn-warning mr-1" title="Editar">
@@ -243,11 +372,11 @@ include 'includes/layout_header.php';
                         </div>
                     </div>
                     <div class="p-4">
-                        <p class="mb-2"><span class="font-semibold">Usuario:</span> <?php echo $row['usuario_red']; ?></p>
+                        <p class="mb-2"><span class="font-semibold">Usuario:</span> <?php echo htmlspecialchars($row['usuario_red']); ?></p>
                         <p class="mb-2">
                             <span class="font-semibold">Contraseña:</span> 
                             <span id="password-hidden-<?php echo $row['id_red']; ?>">••••••••</span>
-                            <span id="password-visible-<?php echo $row['id_red']; ?>" class="hidden"><?php echo $row['contrasena_red']; ?></span>
+                            <span id="password-visible-<?php echo $row['id_red']; ?>" class="hidden"><?php echo htmlspecialchars($row['contrasena_red']); ?></span>
                             <button type="button" class="ml-2 text-blue-600 hover:text-blue-800" onclick="toggleStoredPassword(<?php echo $row['id_red']; ?>)">
                                 <i id="eye-icon-<?php echo $row['id_red']; ?>" class="fas fa-eye"></i>
                             </button>
@@ -256,8 +385,8 @@ include 'includes/layout_header.php';
                         <?php if(!empty($row['url_red'])): ?>
                         <p class="mb-2">
                             <span class="font-semibold">URL:</span> 
-                            <a href="<?php echo $row['url_red']; ?>" target="_blank" class="text-blue-600 hover:underline">
-                                <?php echo $row['url_red']; ?>
+                            <a href="<?php echo htmlspecialchars($row['url_red']); ?>" target="_blank" class="text-blue-600 hover:underline">
+                                <?php echo htmlspecialchars($row['url_red']); ?>
                             </a>
                         </p>
                         <?php endif; ?>
@@ -265,7 +394,7 @@ include 'includes/layout_header.php';
                         <?php if(!empty($row['notas'])): ?>
                         <div class="mt-3 pt-3 border-t">
                             <p class="font-semibold">Notas:</p>
-                            <p class="text-sm text-gray-600"><?php echo nl2br($row['notas']); ?></p>
+                            <p class="text-sm text-gray-600"><?php echo nl2br(htmlspecialchars($row['notas'])); ?></p>
                         </div>
                         <?php endif; ?>
                     </div>
@@ -273,7 +402,13 @@ include 'includes/layout_header.php';
                 <?php endwhile; ?>
             </div>
             <?php else: ?>
-            <p class="text-gray-500">No hay redes sociales registradas para este cliente.</p>
+            <div class="text-center py-8 bg-gray-50 rounded-lg">
+                <i class="fas fa-share-alt text-gray-400 text-4xl mb-4"></i>
+                <p class="text-gray-500">No hay redes sociales registradas para este cliente.</p>
+                <button onclick="toggleForm('social-network-form')" class="mt-3 btn btn-primary">
+                    <i class="fas fa-plus mr-2"></i> Agregar Primera Red Social
+                </button>
+            </div>
             <?php endif; ?>
             
             <!-- Social Network Edit Form (Hidden) -->
@@ -340,8 +475,22 @@ include 'includes/layout_header.php';
         
         <div class="flex justify-between mt-6">
             <a href="clients.php" class="btn btn-secondary">
-                Volver
+                <i class="fas fa-arrow-left mr-2"></i>Volver
             </a>
+            
+            <!-- Botones adicionales para administradores -->
+            <?php if(isAdmin()): ?>
+            <div class="flex gap-2">
+                <a href="client-form.php?id=<?php echo $client->id_cliente; ?>" class="btn btn-warning">
+                    <i class="fas fa-edit mr-2"></i>Editar Cliente
+                </a>
+                <a href="client-delete.php?id=<?php echo $client->id_cliente; ?>" 
+                   class="btn btn-danger" 
+                   onclick="return confirm('¿Está seguro de eliminar este cliente? Esta acción no se puede deshacer.')">
+                    <i class="fas fa-trash mr-2"></i>Eliminar Cliente
+                </a>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -475,6 +624,19 @@ include 'includes/layout_header.php';
         // Guardar el valor actual para la próxima comparación
         tipoRedSelect.setAttribute('data-previous-value', selectedOption.text);
     }
+
+    // Función para mostrar mensaje de éxito y ocultarlo después de unos segundos
+    document.addEventListener('DOMContentLoaded', function() {
+        const successMessage = document.querySelector('.success-message');
+        if (successMessage) {
+            setTimeout(() => {
+                successMessage.style.opacity = '0';
+                setTimeout(() => {
+                    successMessage.remove();
+                }, 300);
+            }, 5000);
+        }
+    });
 </script>
 
 <?php

@@ -30,7 +30,7 @@ include 'includes/layout_header.php';
 
     <!-- Barra de búsqueda -->
     <div class="search-bar mb-4">
-        <input type="text" id="searchInput" class="form-control" placeholder="Buscar por nombre, estado, o plan...">
+        <input type="text" id="searchInput" class="form-control" placeholder="Buscar por nombre, empresa, país, ubicación, plan o estado...">
     </div>
     
     <table class="data-table" id="clientsTable">
@@ -38,6 +38,8 @@ include 'includes/layout_header.php';
             <tr>
                 <th>Cliente</th>
                 <th>Empresa</th>
+                <th>País</th>
+                <th>Ubicación</th>
                 <th>Fecha Pago</th>
                 <th>Plan</th>
                 <th>Estado</th>
@@ -58,6 +60,26 @@ include 'includes/layout_header.php';
                     <?php echo $nombre_cliente; ?>
                 </td>
                 <td><?php echo $nombre_empresa ? $nombre_empresa : 'No asignada'; ?></td>
+                <td>
+                    <?php if (!empty($pais)): ?>
+                        <span class="location-badge">
+                            <i class="fas fa-globe mr-1"></i>
+                            <?php echo $pais; ?>
+                        </span>
+                    <?php else: ?>
+                        <span class="text-muted">No especificado</span>
+                    <?php endif; ?>
+                </td>
+                <td>
+                    <?php if (!empty($provincia)): ?>
+                        <span class="location-badge">
+                            <i class="fas fa-map-marker-alt mr-1"></i>
+                            <?php echo $provincia; ?>
+                        </span>
+                    <?php else: ?>
+                        <span class="text-muted">No especificado</span>
+                    <?php endif; ?>
+                </td>
                 <td><?php echo date('d', strtotime($fecha_pago)); ?></td>
                 <td><?php echo $nombre_plan ? $nombre_plan : 'No asignado'; ?></td>
                 <td>
@@ -92,7 +114,7 @@ include 'includes/layout_header.php';
             } else {
             ?>
             <tr>
-                <td colspan="6" class="text-center">No hay clientes disponibles.</td>
+                <td colspan="8" class="text-center">No hay clientes disponibles.</td>
             </tr>
             <?php 
             }
@@ -101,13 +123,53 @@ include 'includes/layout_header.php';
         <!-- Mensaje si no hay resultados -->
         <tfoot>
             <tr id="noResultsMessage" style="display: none;">
-                <td colspan="6" class="text-center">No se encuentran clientes por la búsqueda.</td>
+                <td colspan="8" class="text-center">No se encuentran clientes por la búsqueda.</td>
             </tr>
         </tfoot>
     </table>
 </div>
 
-<!-- Lógica de búsqueda -->
+<!-- Estilos para las etiquetas de ubicación -->
+<style>
+.location-badge {
+    background-color: #f8f9fa;
+    color: #495057;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    border: 1px solid #dee2e6;
+}
+
+.location-badge i {
+    color: #6c757d;
+}
+
+.text-muted {
+    color: #6c757d !important;
+    font-style: italic;
+}
+
+/* Responsive table adjustments */
+@media (max-width: 768px) {
+    .data-table th:nth-child(3),
+    .data-table td:nth-child(3),
+    .data-table th:nth-child(4),
+    .data-table td:nth-child(4) {
+        display: none;
+    }
+}
+
+@media (max-width: 576px) {
+    .data-table th:nth-child(2),
+    .data-table td:nth-child(2),
+    .data-table th:nth-child(6),
+    .data-table td:nth-child(6) {
+        display: none;
+    }
+}
+</style>
+
+<!-- Lógica de búsqueda actualizada -->
 <script>
     const searchInput = document.getElementById('searchInput');
     const tableRows = document.querySelectorAll('#clientsTable tbody tr');
@@ -118,8 +180,24 @@ include 'includes/layout_header.php';
         let hasResults = false;
 
         tableRows.forEach(row => {
+            // Verificar si la fila tiene el mensaje "No hay clientes disponibles"
+            if (row.querySelector('td[colspan]')) {
+                return; // Saltar esta fila
+            }
+
             const cells = row.querySelectorAll('td');
-            const textContent = Array.from(cells).map(cell => cell.innerText.toLowerCase()).join(' ');
+            
+            // Extraer texto de cada celda relevante
+            const cliente = cells[0]?.innerText.toLowerCase() || '';
+            const empresa = cells[1]?.innerText.toLowerCase() || '';
+            const pais = cells[2]?.innerText.toLowerCase() || '';
+            const ubicacion = cells[3]?.innerText.toLowerCase() || '';
+            const fechaPago = cells[4]?.innerText.toLowerCase() || '';
+            const plan = cells[5]?.innerText.toLowerCase() || '';
+            const estado = cells[6]?.innerText.toLowerCase() || '';
+
+            // Combinar todo el contenido de texto para la búsqueda
+            const textContent = `${cliente} ${empresa} ${pais} ${ubicacion} ${fechaPago} ${plan} ${estado}`;
 
             if (textContent.includes(filter)) {
                 row.style.display = ''; // Mostrar fila
@@ -134,33 +212,36 @@ include 'includes/layout_header.php';
     });
 </script>
 
-
-<!-- Agregar lógica de búsqueda -->
+<!-- Script adicional para filtros específicos (opcional) -->
 <script>
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        const filter = this.value.toLowerCase();
-        const rows = document.querySelectorAll('#clientsTable tbody tr');
+    // Función para filtrar por país específico
+    function filterByCountry(country) {
+        const searchInput = document.getElementById('searchInput');
+        searchInput.value = country;
+        searchInput.dispatchEvent(new Event('keyup'));
+    }
 
-        rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            const name = cells[0]?.innerText.toLowerCase() || '';
-            const company = cells[1]?.innerText.toLowerCase() || '';
-            const payment = cells[2]?.innerText.toLowerCase() || '';
-            const plan = cells[3]?.innerText.toLowerCase() || '';
-            const state = cells[4]?.innerText.toLowerCase() || '';
+    // Función para filtrar por ubicación específica
+    function filterByLocation(location) {
+        const searchInput = document.getElementById('searchInput');
+        searchInput.value = location;
+        searchInput.dispatchEvent(new Event('keyup'));
+    }
 
-            // Filtrar si el texto está presente en cualquier celda
-            if (name.includes(filter) || company.includes(filter) || plan.includes(filter) || state.includes(filter)) {
-                row.style.display = ''; // Mostrar fila
-            } else {
-                row.style.display = 'none'; // Ocultar fila
-            }
+    // Agregar tooltips a las ubicaciones (opcional)
+    document.addEventListener('DOMContentLoaded', function() {
+        const locationBadges = document.querySelectorAll('.location-badge');
+        locationBadges.forEach(badge => {
+            badge.style.cursor = 'pointer';
+            badge.title = 'Click para filtrar por esta ubicación';
+            
+            badge.addEventListener('click', function() {
+                const text = this.innerText.trim();
+                filterByLocation(text);
+            });
         });
     });
 </script>
-
-
-
 
 <?php
 include 'includes/layout_footer.php';
