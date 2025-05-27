@@ -59,7 +59,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
         $client->nombre_cliente = $_POST['nombre_cliente'];
         $client->fecha_inicio = $_POST['fecha_inicio'];
         $client->cumpleaños = $_POST['cumpleaños'];
-        $client->fecha_pago = $_POST['fecha_pago'];
+        $client->fecha_pago = !empty($_POST['fecha_pago']) ? $_POST['fecha_pago'] : null;
         $client->estado = $_POST['estado'];
         $client->id_plan = !empty($_POST['id_plan']) ? $_POST['id_plan'] : null;
         $client->id_empresa = !empty($_POST['id_empresa']) ? $_POST['id_empresa'] : null;
@@ -336,9 +336,9 @@ include 'includes/layout_header.php';
                     <!-- Fecha de Pago -->
                     <div class="bg-gray-50 p-4 rounded-lg border">
                         <label for="fecha_pago" class="block text-gray-700 font-medium mb-2">
-                            Fecha de Pago <span class="text-red-500">*</span>
+                            Fecha de Pago
                         </label>
-                        <input type="date" id="fecha_pago" name="fecha_pago" required 
+                        <input type="date" id="fecha_pago" name="fecha_pago" 
                                value="<?php echo $action === "update" ? ($client->fecha_pago ?? '') : ''; ?>"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
                     </div>
@@ -584,7 +584,7 @@ include 'includes/layout_header.php';
                 <!-- Indicador de campos requeridos -->
                 <div class="mt-4 text-sm text-gray-600 text-center">
                     <i class="fas fa-info-circle mr-1"></i>
-                    Los campos marcados con <span class="text-red-500">*</span> son obligatorios
+                    Los campos marcados con <span class="text-red-500">*</span> son obligatorios. La fecha de pago es opcional.
                 </div>
             </div>
         </form>
@@ -745,7 +745,6 @@ include 'includes/layout_header.php';
         }
     }
     
-    // Validación mejorada del formulario antes de enviar
     document.getElementById('clientForm').addEventListener('submit', function(e) {
         if (formSubmitted) {
             e.preventDefault();

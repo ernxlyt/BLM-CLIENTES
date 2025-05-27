@@ -167,7 +167,13 @@ include 'includes/layout_header.php';
                 <h4 class="text-gray-700 font-medium mb-2">
                     <i class="fas fa-credit-card mr-2 text-gray-500"></i>Fecha de Pago
                 </h4>
-                <p class="text-gray-900"><?php echo date('d/m/Y', strtotime($client->fecha_pago)); ?></p>
+                <?php if (!empty($client->fecha_pago) && $client->fecha_pago !== '0000-00-00' && strtotime($client->fecha_pago) !== false): ?>
+                    <p class="text-gray-900"><?php echo date('d/m/Y', strtotime($client->fecha_pago)); ?></p>
+                <?php else: ?>
+                    <p class="text-gray-500 italic">
+                        <i class="fas fa-calendar-times mr-2"></i>No disponible
+                    </p>
+                <?php endif; ?>
             </div>
             
             <!-- Estado -->

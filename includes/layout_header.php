@@ -9,6 +9,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo strpos($_SERVER['PHP_SELF'], '/admin/') !== false ? '../assets/css/style.css' : 'assets/css/style.css'; ?>">
     <link rel="icon" type="image" href="assets/img/favicon.png">
+    
+    <style>
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        .nav-menu {
+            flex: 1;
+        }
+        
+        .bottom-logo {
+            margin-top: auto;
+            padding-bottom: 1rem;
+        }
+    </style>
 
 </head>
 <body>
@@ -49,6 +66,11 @@
                 </a>
                 <?php endif; ?>
             </nav>
+
+            <!-- Imagen pegada al fondo del sidebar -->
+            <div class="logo-container bottom-logo">
+                <img src="<?php echo strpos($_SERVER['PHP_SELF'], '/admin/') !== false ? '../assets/img/mariangellogo.png' : 'assets/img/mariangellogo.png'; ?>" alt="Logo" class="logo">
+            </div>
         </aside>
 
         <main class="content">
