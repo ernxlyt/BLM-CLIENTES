@@ -14,14 +14,15 @@ class Client {
     public $nombre_empresa; 
     public $rubro_empresa;
     public $estado;
-    public $pais;
-    public $provincia;
+    public $pais;        // ✅ AGREGAR ESTA LÍNEA
+    public $provincia;   // ✅ AGREGAR ESTA LÍNEA
 
     public function __construct($db) {
         $this->conn = $db;
     }
 
     public function create() {
+        // ✅ CAMBIAR ESTA CONSULTA - AGREGAR pais, provincia
         $query = "INSERT INTO " . $this->table_name . " 
             (nombre_cliente, fecha_inicio, cumpleaños, fecha_pago, estado, id_plan, id_empresa, pais, provincia)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -34,45 +35,8 @@ class Client {
         $this->cumpleaños = htmlspecialchars(strip_tags($this->cumpleaños));
         $this->fecha_pago = htmlspecialchars(strip_tags($this->fecha_pago));
         $this->estado = htmlspecialchars(strip_tags($this->estado));
-         $this->pais = $this->pais ? htmlspecialchars(strip_tags($this->pais)) : null;
-        $this->provincia = $this->provincia ? htmlspecialchars(strip_tags($this->provincia)) : null;
         
-        // Preparar valores para id_plan e id_empresa (pueden ser NULL)
-        $id_plan = !empty($this->id_plan) ? $this->id_plan : null;
-        $id_empresa = !empty($this->id_empresa) ? $this->id_empresa : null;
-
-        $stmt->bindParam(1, $this->nombre_cliente);
-        $stmt->bindParam(2, $this->fecha_inicio);
-        $stmt->bindParam(3, $this->cumpleaños);
-        $stmt->bindParam(4, $this->fecha_pago);
-        $stmt->bindParam(5, $this->estado);
-        $stmt->bindParam(6, $id_plan);
-        $stmt->bindParam(7, $id_empresa);
-        $stmt->bindParam(8, $this->pais);        // ✅ NUEVO
-
-        if ($stmt->execute()) {
-            return true;
-        }
-        
-        // Para debugging, puedes descomentar esta línea:
-        // print_r($stmt->errorInfo());
-        
-        return false;
-    }
-
-    public function createWithNamedParams() {
-        $query = "INSERT INTO " . $this->table_name . " 
-            (nombre_cliente, fecha_inicio, cumpleaños, fecha_pago, estado, id_plan, id_empresa, pais, provincia)
-            VALUES (:nombre_cliente, :fecha_inicio, :cumpleanos, :fecha_pago, :estado, :id_plan, :id_empresa, :pais, :provincia)";
-
-        $stmt = $this->conn->prepare($query);
-
-        // Sanitizar valores
-        $this->nombre_cliente = htmlspecialchars(strip_tags($this->nombre_cliente));
-        $this->fecha_inicio = htmlspecialchars(strip_tags($this->fecha_inicio));
-        $this->cumpleaños = htmlspecialchars(strip_tags($this->cumpleaños));
-        $this->fecha_pago = htmlspecialchars(strip_tags($this->fecha_pago));
-        $this->estado = htmlspecialchars(strip_tags($this->estado));
+        // ✅ AGREGAR ESTAS LÍNEAS
         $this->pais = $this->pais ? htmlspecialchars(strip_tags($this->pais)) : null;
         $this->provincia = $this->provincia ? htmlspecialchars(strip_tags($this->provincia)) : null;
         
@@ -80,15 +44,16 @@ class Client {
         $id_plan = !empty($this->id_plan) ? $this->id_plan : null;
         $id_empresa = !empty($this->id_empresa) ? $this->id_empresa : null;
 
-        $stmt->bindParam(':nombre_cliente', $this->nombre_cliente);
-        $stmt->bindParam(':fecha_inicio', $this->fecha_inicio);
-        $stmt->bindParam(':cumpleanos', $this->cumpleaños);
-        $stmt->bindParam(':fecha_pago', $this->fecha_pago);
-        $stmt->bindParam(':estado', $this->estado);
-        $stmt->bindParam(':id_plan', $id_plan);
-        $stmt->bindParam(':id_empresa', $id_empresa);
-        $stmt->bindParam(':pais', $this->pais);           
-        $stmt->bindParam(':provincia', $this->provincia); 
+        // ✅ CAMBIAR ESTOS BIND PARAMS - AGREGAR 2 MÁS (9 total en lugar de 7)
+        $stmt->bindParam(1, $this->nombre_cliente);
+        $stmt->bindParam(2, $this->fecha_inicio);
+        $stmt->bindParam(3, $this->cumpleaños);
+        $stmt->bindParam(4, $this->fecha_pago);
+        $stmt->bindParam(5, $this->estado);
+        $stmt->bindParam(6, $id_plan);
+        $stmt->bindParam(7, $id_empresa);
+        $stmt->bindParam(8, $this->pais);        // ✅ AGREGAR ESTA LÍNEA
+        $stmt->bindParam(9, $this->provincia);   // ✅ AGREGAR ESTA LÍNEA
 
         if ($stmt->execute()) {
             return true;
@@ -97,6 +62,7 @@ class Client {
         return false;
     }
 
+    // Read all clients
     public function read($user_id, $is_admin) {
         if($is_admin) {
             $query = "SELECT c.*, p.nombre_plan, e.nombre_empresa, e.rubro as rubro_empresa
@@ -121,6 +87,7 @@ class Client {
         return $stmt;
     }
 
+    // Read one client
     public function readOne($user_id, $is_admin) {
         if($is_admin) {
             $query = "SELECT c.*, p.nombre_plan, e.nombre_empresa, e.rubro as rubro_empresa
@@ -159,7 +126,9 @@ class Client {
             $this->id_empresa = $row['id_empresa'];
             $this->nombre_empresa = $row['nombre_empresa'];
             $this->rubro_empresa = $row['rubro_empresa'];
-                        $this->pais = $row['pais'] ?? null;
+            
+            // ✅ AGREGAR ESTAS LÍNEAS
+            $this->pais = $row['pais'] ?? null;
             $this->provincia = $row['provincia'] ?? null;
             
             return true;
@@ -168,6 +137,7 @@ class Client {
         return false;
     }
 
+    // Update client
     public function update() {
         // Sanitize values
         $this->nombre_cliente = htmlspecialchars(strip_tags($this->nombre_cliente));
@@ -176,9 +146,12 @@ class Client {
         $this->fecha_pago = htmlspecialchars(strip_tags($this->fecha_pago));
         $this->estado = htmlspecialchars(strip_tags($this->estado));
         $this->id_cliente = htmlspecialchars(strip_tags($this->id_cliente));
+        
+        // ✅ AGREGAR ESTAS LÍNEAS
         $this->pais = $this->pais ? htmlspecialchars(strip_tags($this->pais)) : null;
         $this->provincia = $this->provincia ? htmlspecialchars(strip_tags($this->provincia)) : null;
         
+        // ✅ CAMBIAR ESTA CONSULTA - AGREGAR pais, provincia
         $query = "UPDATE " . $this->table_name . " 
                   SET nombre_cliente = ?, 
                       fecha_inicio = ?, 
@@ -197,6 +170,7 @@ class Client {
         $id_plan = !empty($this->id_plan) ? $this->id_plan : null;
         $id_empresa = !empty($this->id_empresa) ? $this->id_empresa : null;
         
+        // ✅ CAMBIAR ESTOS BIND PARAMS - AGREGAR 2 MÁS (10 total en lugar de 8)
         $stmt->bindParam(1, $this->nombre_cliente);
         $stmt->bindParam(2, $this->fecha_inicio);
         $stmt->bindParam(3, $this->cumpleaños);
@@ -204,9 +178,9 @@ class Client {
         $stmt->bindParam(5, $this->estado);
         $stmt->bindParam(6, $id_plan);
         $stmt->bindParam(7, $id_empresa);
-        $stmt->bindParam(8, $this->pais);        
-        $stmt->bindParam(9, $this->provincia);   
-        $stmt->bindParam(10, $this->id_cliente); 
+        $stmt->bindParam(8, $this->pais);        // ✅ AGREGAR ESTA LÍNEA
+        $stmt->bindParam(9, $this->provincia);   // ✅ AGREGAR ESTA LÍNEA
+        $stmt->bindParam(10, $this->id_cliente); // ✅ CAMBIAR DE 8 A 10
         
         if ($stmt->execute()) {
             return true;
@@ -254,121 +228,137 @@ class Client {
 
     // Get upcoming payments
     public function getUpcomingPayments($user_id, $is_admin, $days = 7) {
+        // Obtener todos los clientes primero
         if($is_admin) {
             $query = "SELECT c.*, p.nombre_plan, e.nombre_empresa, e.rubro as rubro_empresa
                       FROM " . $this->table_name . " c
                       LEFT JOIN planes p ON c.id_plan = p.id_plan
                       LEFT JOIN empresas e ON c.id_empresa = e.id_empresa
-                      WHERE 
-                        (DAY(c.fecha_pago) = DAY(CURDATE()))
-                        OR
-                        (
-                            DAY(c.fecha_pago) > DAY(CURDATE())
-                            AND
-                            DAY(c.fecha_pago) <= DAY(CURDATE() + INTERVAL ? DAY)
-                            AND
-                            DAY(CURDATE() + INTERVAL ? DAY) <= DAY(LAST_DAY(CURDATE()))
-                        )
-                        OR
-                        (
-                            DAY(CURDATE() + INTERVAL ? DAY) > DAY(LAST_DAY(CURDATE()))
-                            AND
-                            DAY(c.fecha_pago) <= DAY(CURDATE() + INTERVAL ? DAY) - DAY(LAST_DAY(CURDATE()))
-                        )
-                      ORDER BY 
-                        (DAY(c.fecha_pago) = DAY(CURDATE())) DESC,
-                        CASE
-                            WHEN DAY(c.fecha_pago) >= DAY(CURDATE()) THEN DAY(c.fecha_pago)
-                            ELSE DAY(c.fecha_pago) + 100
-                        END ASC";
+                      ORDER BY c.id_cliente DESC";
             $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(1, $days, PDO::PARAM_INT);
-            $stmt->bindParam(2, $days, PDO::PARAM_INT);
-            $stmt->bindParam(3, $days, PDO::PARAM_INT);
-            $stmt->bindParam(4, $days, PDO::PARAM_INT);
         } else {
             $query = "SELECT c.*, p.nombre_plan, e.nombre_empresa, e.rubro as rubro_empresa
                       FROM " . $this->table_name . " c
                       LEFT JOIN planes p ON c.id_plan = p.id_plan
                       LEFT JOIN empresas e ON c.id_empresa = e.id_empresa
                       JOIN relaciones r ON c.id_cliente = r.id_cliente
-                      WHERE r.id_usuario = ? AND (
-                        (DAY(c.fecha_pago) = DAY(CURDATE()))
-                        OR
-                        (
-                            DAY(c.fecha_pago) > DAY(CURDATE())
-                            AND
-                            DAY(c.fecha_pago) <= DAY(CURDATE() + INTERVAL ? DAY)
-                            AND
-                            DAY(CURDATE() + INTERVAL ? DAY) <= DAY(LAST_DAY(CURDATE()))
-                        )
-                        OR
-                        (
-                            DAY(CURDATE() + INTERVAL ? DAY) > DAY(LAST_DAY(CURDATE()))
-                            AND
-                            DAY(c.fecha_pago) <= DAY(CURDATE() + INTERVAL ? DAY) - DAY(LAST_DAY(CURDATE()))
-                        )
-                      )
-                      ORDER BY 
-                        (DAY(c.fecha_pago) = DAY(CURDATE())) DESC,
-                        CASE
-                            WHEN DAY(c.fecha_pago) >= DAY(CURDATE()) THEN DAY(c.fecha_pago)
-                            ELSE DAY(c.fecha_pago) + 100
-                        END ASC";
+                      WHERE r.id_usuario = ?
+                      ORDER BY c.id_cliente DESC";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
-            $stmt->bindParam(2, $days, PDO::PARAM_INT);
-            $stmt->bindParam(3, $days, PDO::PARAM_INT);
-            $stmt->bindParam(4, $days, PDO::PARAM_INT);
-            $stmt->bindParam(5, $days, PDO::PARAM_INT);
         }
         
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $all_clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $upcoming_payments = [];
+        $today = new DateTime();
+        $end_date = new DateTime();
+        $end_date->modify("+{$days} days");
+        
+        foreach ($all_clients as $client) {
+            if (empty($client['fecha_pago'])) continue;
+            
+            // Obtener el día del mes de la fecha de pago
+            $payment_day = (int)date('d', strtotime($client['fecha_pago']));
+            
+            // Verificar los próximos meses para encontrar fechas dentro del rango
+            for ($month_offset = 0; $month_offset <= 2; $month_offset++) {
+                $check_date = new DateTime();
+                $check_date->modify("+{$month_offset} months");
+                
+                // Obtener el último día del mes
+                $last_day_of_month = (int)$check_date->format('t');
+                
+                // Ajustar el día si es mayor al último día del mes
+                $actual_payment_day = min($payment_day, $last_day_of_month);
+                
+                // Crear la fecha de pago para este mes
+                $payment_date = new DateTime($check_date->format('Y-m-') . sprintf('%02d', $actual_payment_day));
+                
+                // Verificar si está dentro del rango
+                if ($payment_date >= $today && $payment_date <= $end_date) {
+                    // Agregar información de la fecha calculada al cliente
+                    $client['calculated_payment_date'] = $payment_date->format('Y-m-d');
+                    $client['days_until_payment'] = $today->diff($payment_date)->days;
+                    
+                    $upcoming_payments[] = $client;
+                    break; // Solo agregar una vez por cliente
+                }
+            }
+        }
+        
+        // Ordenar por fecha de pago más cercana
+        usort($upcoming_payments, function($a, $b) {
+            return strtotime($a['calculated_payment_date']) - strtotime($b['calculated_payment_date']);
+        });
+        
+        return $upcoming_payments;
     }
     
     // Get upcoming birthdays
     public function getUpcomingBirthdays($user_id, $is_admin, $days = 30) {
+        // Obtener todos los clientes primero
         if($is_admin) {
             $query = "SELECT c.*, p.nombre_plan, e.nombre_empresa, e.rubro as rubro_empresa
                       FROM " . $this->table_name . " c
                       LEFT JOIN planes p ON c.id_plan = p.id_plan
                       LEFT JOIN empresas e ON c.id_empresa = e.id_empresa
-                      WHERE DATE_FORMAT(c.cumpleaños, '%m-%d') = DATE_FORMAT(CURDATE(), '%m-%d')
-                      OR (
-                          DATE_FORMAT(c.cumpleaños, '%m-%d') > DATE_FORMAT(CURDATE(), '%m-%d')
-                          AND 
-                          DATE_FORMAT(c.cumpleaños, '%m-%d') <= DATE_FORMAT(DATE_ADD(CURDATE(), INTERVAL ? DAY), '%m-%d')
-                      )
-                      ORDER BY 
-                          DATE_FORMAT(c.cumpleaños, '%m-%d') = DATE_FORMAT(CURDATE(), '%m-%d') DESC,
-                          DATE_FORMAT(c.cumpleaños, '%m-%d') ASC";
+                      ORDER BY c.id_cliente DESC";
             $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(1, $days, PDO::PARAM_INT);
         } else {
             $query = "SELECT c.*, p.nombre_plan, e.nombre_empresa, e.rubro as rubro_empresa
                       FROM " . $this->table_name . " c
                       LEFT JOIN planes p ON c.id_plan = p.id_plan
                       LEFT JOIN empresas e ON c.id_empresa = e.id_empresa
                       JOIN relaciones r ON c.id_cliente = r.id_cliente
-                      WHERE r.id_usuario = ? AND (
-                          DATE_FORMAT(c.cumpleaños, '%m-%d') = DATE_FORMAT(CURDATE(), '%m-%d')
-                          OR (
-                              DATE_FORMAT(c.cumpleaños, '%m-%d') > DATE_FORMAT(CURDATE(), '%m-%d')
-                              AND 
-                              DATE_FORMAT(c.cumpleaños, '%m-%d') <= DATE_FORMAT(DATE_ADD(CURDATE(), INTERVAL ? DAY), '%m-%d')
-                          )
-                      )
-                      ORDER BY 
-                          DATE_FORMAT(c.cumpleaños, '%m-%d') = DATE_FORMAT(CURDATE(), '%m-%d') DESC,
-                          DATE_FORMAT(c.cumpleaños, '%m-%d') ASC";
+                      WHERE r.id_usuario = ?
+                      ORDER BY c.id_cliente DESC";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
-            $stmt->bindParam(2, $days, PDO::PARAM_INT);
         }
         
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $all_clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $upcoming_birthdays = [];
+        $today = new DateTime();
+        $end_date = new DateTime();
+        $end_date->modify("+{$days} days");
+        
+        foreach ($all_clients as $client) {
+            if (empty($client['cumpleaños'])) continue;
+            
+            // Obtener mes y día del cumpleaños
+            $birth_month = (int)date('m', strtotime($client['cumpleaños']));
+            $birth_day = (int)date('d', strtotime($client['cumpleaños']));
+            
+            // Verificar este año y el próximo
+            for ($year_offset = 0; $year_offset <= 1; $year_offset++) {
+                $check_year = (int)$today->format('Y') + $year_offset;
+                
+                // Crear la fecha de cumpleaños para este año
+                $birthday_date = new DateTime();
+                $birthday_date->setDate($check_year, $birth_month, $birth_day);
+                
+                // Verificar si está dentro del rango
+                if ($birthday_date >= $today && $birthday_date <= $end_date) {
+                    // Agregar información de la fecha calculada al cliente
+                    $client['calculated_birthday_date'] = $birthday_date->format('Y-m-d');
+                    $client['days_until_birthday'] = $today->diff($birthday_date)->days;
+                    
+                    $upcoming_birthdays[] = $client;
+                    break; // Solo agregar una vez por cliente
+                }
+            }
+        }
+        
+        // Ordenar por fecha de cumpleaños más cercana
+        usort($upcoming_birthdays, function($a, $b) {
+            return strtotime($a['calculated_birthday_date']) - strtotime($b['calculated_birthday_date']);
+        });
+        
+        return $upcoming_birthdays;
     }
 
     // Count total clients
@@ -414,77 +404,6 @@ class Client {
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(1, $user_id);
             $stmt->bindParam(2, $limit, PDO::PARAM_INT);
-        }
-        
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    
-    // Obtener clientes por país
-    public function getClientsByCountry($user_id, $is_admin) {
-        if($is_admin) {
-            $query = "SELECT pais, COUNT(*) as total_clientes
-                      FROM " . $this->table_name . "
-                      WHERE pais IS NOT NULL AND pais != ''
-                      GROUP BY pais
-                      ORDER BY total_clientes DESC";
-            $stmt = $this->conn->prepare($query);
-        } else {
-            $query = "SELECT c.pais, COUNT(*) as total_clientes
-                      FROM " . $this->table_name . " c
-                      JOIN relaciones r ON c.id_cliente = r.id_cliente
-                      WHERE r.id_usuario = ? AND c.pais IS NOT NULL AND c.pais != ''
-                      GROUP BY c.pais
-                      ORDER BY total_clientes DESC";
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(1, $user_id);
-        }
-        
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    // Obtener clientes por provincia
-    public function getClientsByProvince($user_id, $is_admin, $country = null) {
-        if($is_admin) {
-            if($country) {
-                $query = "SELECT provincia, COUNT(*) as total_clientes
-                          FROM " . $this->table_name . "
-                          WHERE pais = ? AND provincia IS NOT NULL AND provincia != ''
-                          GROUP BY provincia
-                          ORDER BY total_clientes DESC";
-                $stmt = $this->conn->prepare($query);
-                $stmt->bindParam(1, $country);
-            } else {
-                $query = "SELECT pais, provincia, COUNT(*) as total_clientes
-                          FROM " . $this->table_name . "
-                          WHERE provincia IS NOT NULL AND provincia != ''
-                          GROUP BY pais, provincia
-                          ORDER BY pais, total_clientes DESC";
-                $stmt = $this->conn->prepare($query);
-            }
-        } else {
-            if($country) {
-                $query = "SELECT c.provincia, COUNT(*) as total_clientes
-                          FROM " . $this->table_name . " c
-                          JOIN relaciones r ON c.id_cliente = r.id_cliente
-                          WHERE r.id_usuario = ? AND c.pais = ? AND c.provincia IS NOT NULL AND c.provincia != ''
-                          GROUP BY c.provincia
-                          ORDER BY total_clientes DESC";
-                $stmt = $this->conn->prepare($query);
-                $stmt->bindParam(1, $user_id);
-                $stmt->bindParam(2, $country);
-            } else {
-                $query = "SELECT c.pais, c.provincia, COUNT(*) as total_clientes
-                          FROM " . $this->table_name . " c
-                          JOIN relaciones r ON c.id_cliente = r.id_cliente
-                          WHERE r.id_usuario = ? AND c.provincia IS NOT NULL AND c.provincia != ''
-                          GROUP BY c.pais, c.provincia
-                          ORDER BY c.pais, total_clientes DESC";
-                $stmt = $this->conn->prepare($query);
-                $stmt->bindParam(1, $user_id);
-            }
         }
         
         $stmt->execute();

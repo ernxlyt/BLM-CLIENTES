@@ -20,7 +20,7 @@ include 'includes/layout_header.php';
 
 <div class="card">
     <div class="card-header">
-        <h2 class="card-title">Lista de Clientes- BLM </h2>
+        <h2 class="card-title">Lista de Clientes</h2>
         <?php if (isAdmin()): ?>
         <a href="client-form.php" class="btn btn-primary">
             <i class="fas fa-plus mr-2"></i> Nuevo Cliente
