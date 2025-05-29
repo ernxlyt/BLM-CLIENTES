@@ -393,12 +393,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    window.addEventListener('beforeunload', function(e) {
-        if (formChanged) {
-            e.preventDefault();
-            e.returnValue = '';
-        }
-    });
     
     // Validación básica
     form.addEventListener('submit', function(e) {

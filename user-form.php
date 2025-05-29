@@ -16,6 +16,8 @@ $role = new Role($db);
 
 $page_title = "Nuevo Usuario";
 $action = "create";
+$error_message = "";
+$success_message = "";
 
 // Verificar si se está editando un usuario existente
 if (isset($_GET['id']) && !empty($_GET['id'])) {
@@ -32,37 +34,74 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
 
 // Procesar formulario de envío
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $user->nombre_usuario = $_POST['nombre_usuario'];
-    $user->correo_usuario = $_POST['correo_usuario'];
+    $user->nombre_usuario = trim($_POST['nombre_usuario']);
+    $user->correo_usuario = trim($_POST['correo_usuario']);
     $user->id_rol = $_POST['id_rol'];
 
-    // Validar contraseña al crear un usuario
-    if ($action === "create") {
-        if (!empty($_POST['contrasena'])) {
-            $user->contrasena = $_POST['contrasena'];
-        } else {
-            $message = "La contraseña es obligatoria al crear un usuario.";
-            include 'includes/layout_header.php';
-            echo "<div class='alert alert-danger'>{$message}</div>";
-            include 'includes/layout_footer.php';
-            exit();
-        }
-
-        // Crear el usuario
-        if ($user->create()) {
-            header("Location: users.php");
-            exit();
-        }
+    // Validaciones básicas
+    if (empty($user->nombre_usuario)) {
+        $error_message = "El nombre del usuario es obligatorio.";
+    } elseif (empty($user->correo_usuario)) {
+        $error_message = "El correo electrónico es obligatorio.";
+    } elseif (empty($user->id_rol)) {
+        $error_message = "Debe seleccionar un rol.";
+    } elseif ($action === "create" && empty($_POST['contrasena'])) {
+        $error_message = "La contraseña es obligatoria al crear un usuario.";
     } else {
-        // Actualizar usuario
-        if (!empty($_POST['contrasena'])) {
+        if ($action === "create") {
             $user->contrasena = $_POST['contrasena'];
-            $user->updatePassword();
-        }
+            $result = $user->create();
+            
+            if ($result === true) {
+                header("Location: users.php?success=created");
+                exit();
+            } else {
+                // Manejar diferentes tipos de error
+                switch ($result) {
+                    case 'username_exists':
+                        $error_message = "El nombre de usuario '{$user->nombre_usuario}' ya está en uso. Por favor, elija otro nombre.";
+                        break;
+                    case 'email_exists':
+                        $error_message = "El correo electrónico '{$user->correo_usuario}' ya está registrado. Por favor, use otro correo.";
+                        break;
+                    case 'password_required':
+                        $error_message = "La contraseña es obligatoria al crear un usuario.";
+                        break;
+                    case 'database_error':
+                        $error_message = "Error al crear el usuario. Por favor, inténtelo de nuevo.";
+                        break;
+                    default:
+                        $error_message = "Error desconocido al crear el usuario.";
+                }
+            }
+        } else {
+            // Actualizar usuario
+            if (!empty($_POST['contrasena'])) {
+                $user->contrasena = $_POST['contrasena'];
+                $user->updatePassword();
+            }
 
-        if ($user->update()) {
-            header("Location: users.php");
-            exit();
+            $result = $user->update();
+            
+            if ($result === true) {
+                header("Location: users.php?success=updated");
+                exit();
+            } else {
+                // Manejar diferentes tipos de error
+                switch ($result) {
+                    case 'username_exists':
+                        $error_message = "El nombre de usuario '{$user->nombre_usuario}' ya está en uso. Por favor, elija otro nombre.";
+                        break;
+                    case 'email_exists':
+                        $error_message = "El correo electrónico '{$user->correo_usuario}' ya está registrado. Por favor, use otro correo.";
+                        break;
+                    case 'database_error':
+                        $error_message = "Error al actualizar el usuario. Por favor, inténtelo de nuevo.";
+                        break;
+                    default:
+                        $error_message = "Error desconocido al actualizar el usuario.";
+                }
+            }
         }
     }
 }
@@ -86,6 +125,8 @@ include 'includes/layout_header.php';
     --border-gray: #e5e7eb;
     --white: #ffffff;
     --red: #ef4444;
+    --light-red: #fef2f2;
+    --green: #10b981;
 }
 
 /* Contenedor principal */
@@ -144,6 +185,47 @@ include 'includes/layout_header.php';
     align-items: center;
     justify-content: center;
     font-size: 1rem;
+}
+
+/* Alertas */
+.alert {
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.alert-danger {
+    background: var(--light-red);
+    color: var(--red);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.alert-success {
+    background: var(--light-green);
+    color: var(--dark-green);
+    border: 1px solid rgba(35, 217, 80, 0.2);
+}
+
+.alert-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
 }
 
 /* Formulario */
@@ -218,12 +300,18 @@ include 'includes/layout_header.php';
     color: var(--dark-gray);
     font-size: 0.875rem;
     transition: all 0.3s ease;
+    box-sizing: border-box;
 }
 
 .form-control:focus {
     outline: none;
     border-color: var(--primary-green);
     box-shadow: 0 0 0 3px rgba(35, 217, 80, 0.1);
+}
+
+.form-control.error {
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
 .form-text {
@@ -245,6 +333,7 @@ include 'includes/layout_header.php';
     color: var(--medium-gray);
     cursor: pointer;
     transition: color 0.2s ease;
+    z-index: 10;
 }
 
 .password-toggle:hover {
@@ -274,13 +363,18 @@ include 'includes/layout_header.php';
     cursor: pointer;
 }
 
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .btn-primary {
     background: var(--primary-green);
     color: var(--white);
     border-color: var(--primary-green);
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
     background: var(--dark-green);
     border-color: var(--dark-green);
     transform: translateY(-1px);
@@ -341,6 +435,22 @@ include 'includes/layout_header.php';
         </div>
     </div>
 
+    <!-- Mostrar mensajes de error -->
+    <?php if (!empty($error_message)): ?>
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle alert-icon"></i>
+            <?php echo htmlspecialchars($error_message); ?>
+        </div>
+    <?php endif; ?>
+
+    <!-- Mostrar mensajes de éxito -->
+    <?php if (!empty($success_message)): ?>
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle alert-icon"></i>
+            <?php echo htmlspecialchars($success_message); ?>
+        </div>
+    <?php endif; ?>
+
     <!-- Formulario -->
     <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"] . ($action === "update" ? "?id=" . $user->id_usuario : "")); ?>" id="userForm">
         <div class="form-card">
@@ -356,10 +466,11 @@ include 'includes/layout_header.php';
                             <span class="required-indicator">*</span>
                         </label>
                         <input type="text" id="nombre_usuario" name="nombre_usuario" required 
-                               value="<?php echo $action === "update" ? htmlspecialchars($user->nombre_usuario) : ''; ?>"
-                               class="form-control" placeholder="Ej: Juan Pérez"
+                               value="<?php echo $action === "update" ? htmlspecialchars($user->nombre_usuario) : (isset($_POST['nombre_usuario']) ? htmlspecialchars($_POST['nombre_usuario']) : ''); ?>"
+                               class="form-control <?php echo (!empty($error_message) && strpos($error_message, 'nombre de usuario') !== false) ? 'error' : ''; ?>" 
+                               placeholder="Ej: Juan Pérez"
                                autofocus>
-                        <div class="form-text">Ingresa el nombre completo del usuario.</div>
+                        <div class="form-text">Ingresa el nombre completo del usuario. Debe ser único en el sistema.</div>
                     </div>
                     
                     <div class="form-group">
@@ -368,9 +479,10 @@ include 'includes/layout_header.php';
                             <span class="required-indicator">*</span>
                         </label>
                         <input type="email" id="correo_usuario" name="correo_usuario" required 
-                               value="<?php echo $action === "update" ? htmlspecialchars($user->correo_usuario) : ''; ?>"
-                               class="form-control" placeholder="usuario@ejemplo.com">
-                        <div class="form-text">Este correo se usará para iniciar sesión.</div>
+                               value="<?php echo $action === "update" ? htmlspecialchars($user->correo_usuario) : (isset($_POST['correo_usuario']) ? htmlspecialchars($_POST['correo_usuario']) : ''); ?>"
+                               class="form-control <?php echo (!empty($error_message) && strpos($error_message, 'correo') !== false) ? 'error' : ''; ?>" 
+                               placeholder="usuario@ejemplo.com">
+                        <div class="form-text">Este correo se usará para iniciar sesión y debe ser único.</div>
                     </div>
                     
                     <div class="form-group">
@@ -383,14 +495,15 @@ include 'includes/layout_header.php';
                         <div class="password-input-container">
                             <input type="password" id="contrasena" name="contrasena" 
                                    <?php echo $action === "create" ? "required" : ""; ?>
-                                   class="form-control" placeholder="••••••••">
+                                   class="form-control" placeholder="••••••••"
+                                   minlength="4">
                             <i class="fas fa-eye password-toggle" onclick="togglePassword()"></i>
                         </div>
                         <div class="form-text">
                             <?php if ($action === "update"): ?>
                                 Dejar en blanco para mantener la contraseña actual.
                             <?php else: ?>
-                                Mínimo 6 caracteres recomendados.
+                                Mínimo 4 caracteres recomendados.
                             <?php endif; ?>
                         </div>
                     </div>
@@ -405,7 +518,12 @@ include 'includes/layout_header.php';
                             <?php 
                             while ($row = $roles_stmt->fetch(PDO::FETCH_ASSOC)) {
                                 extract($row);
-                                $selected = ($action === "update" && $user->id_rol == $id_rol) ? "selected" : "";
+                                $selected = "";
+                                if ($action === "update" && $user->id_rol == $id_rol) {
+                                    $selected = "selected";
+                                } elseif (isset($_POST['id_rol']) && $_POST['id_rol'] == $id_rol) {
+                                    $selected = "selected";
+                                }
                                 echo "<option value='{$id_rol}' {$selected}>{$nombre_rol}</option>";
                             }
                             ?>
@@ -456,46 +574,80 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
     });
     
-    // Advertir antes de salir si hay cambios sin guardar
-    let formChanged = false;
-    
-    const inputs = form.querySelectorAll('input, select');
-    inputs.forEach(input => {
-        input.addEventListener('change', function() {
-            formChanged = true;
-        });
-    });
-    
-    window.addEventListener('beforeunload', function(e) {
-        if (formChanged) {
-            e.preventDefault();
-            e.returnValue = '';
-        }
-    });
-    
-    // Validación básica
+    // Validación básica del lado del cliente
     form.addEventListener('submit', function(e) {
         const nombreUsuario = document.getElementById('nombre_usuario').value.trim();
         const correoUsuario = document.getElementById('correo_usuario').value.trim();
         const idRol = document.getElementById('id_rol').value;
+        const contrasena = document.getElementById('contrasena').value;
+        
+        let hasError = false;
         
         if (nombreUsuario === '') {
             e.preventDefault();
             alert('Por favor ingrese un nombre para el usuario.');
             document.getElementById('nombre_usuario').focus();
+            hasError = true;
         }
         
-        if (correoUsuario === '') {
+        if (!hasError && correoUsuario === '') {
             e.preventDefault();
             alert('Por favor ingrese un correo electrónico válido.');
             document.getElementById('correo_usuario').focus();
+            hasError = true;
         }
         
-        if (idRol === '') {
+        if (!hasError && idRol === '') {
             e.preventDefault();
             alert('Por favor seleccione un rol para el usuario.');
             document.getElementById('id_rol').focus();
+            hasError = true;
         }
+        
+        // Validar contraseña solo al crear usuario
+        <?php if ($action === "create"): ?>
+        if (!hasError && contrasena === '') {
+            e.preventDefault();
+            alert('Por favor ingrese una contraseña.');
+            document.getElementById('contrasena').focus();
+            hasError = true;
+        }
+        
+        if (!hasError && contrasena.length < 4) {
+            e.preventDefault();
+            alert('La contraseña debe tener al menos 4 caracteres.');
+            document.getElementById('contrasena').focus();
+            hasError = true;
+        }
+        <?php endif; ?>
+        
+        // Si hay error, rehabilitar el botón
+        if (hasError) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> <?php echo $action === "update" ? "Actualizar Usuario" : "Crear Usuario"; ?>';
+        }
+    });
+    
+    // Limpiar estilos de error al escribir
+    const inputs = document.querySelectorAll('.form-control');
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            this.classList.remove('error');
+        });
+    });
+    
+    // Auto-ocultar alertas después de 5 segundos
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateY(-10px)';
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
+                }
+            }, 300);
+        }, 5000);
     });
 });
 </script>

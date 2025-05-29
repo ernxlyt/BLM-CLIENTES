@@ -14,24 +14,63 @@ class User {
         $this->conn = $db;
     }
 
+    // Verificar si el nombre de usuario ya existe
+    public function usernameExists($username, $exclude_id = null) {
+        $query = "SELECT id_usuario FROM " . $this->table_name . " WHERE nombre_usuario = :username";
+        
+        if ($exclude_id !== null) {
+            $query .= " AND id_usuario != :exclude_id";
+        }
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':username', $username);
+        
+        if ($exclude_id !== null) {
+            $stmt->bindParam(':exclude_id', $exclude_id);
+        }
+        
+        $stmt->execute();
+        
+        return $stmt->rowCount() > 0;
+    }
+
+    // Verificar si el correo ya existe
+    public function emailExists($email, $exclude_id = null) {
+        $query = "SELECT id_usuario FROM " . $this->table_name . " WHERE correo_usuario = :email";
+        
+        if ($exclude_id !== null) {
+            $query .= " AND id_usuario != :exclude_id";
+        }
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':email', $email);
+        
+        if ($exclude_id !== null) {
+            $stmt->bindParam(':exclude_id', $exclude_id);
+        }
+        
+        $stmt->execute();
+        
+        return $stmt->rowCount() > 0;
+    }
+
     // Crear un nuevo usuario (almacena la contraseña en texto plano)
     public function create() {
         if (empty($this->contrasena)) {
-            return false; // Validación: Contraseña obligatoria
+            return 'password_required'; // Código de error específico
+        }
+
+        // Verificar si el nombre de usuario ya está registrado
+        if ($this->usernameExists($this->nombre_usuario)) {
+            return 'username_exists'; // Código de error específico
         }
 
         // Verificar si el correo ya está registrado en la BD
-        $queryCheck = "SELECT id_usuario FROM " . $this->table_name . " WHERE correo_usuario = :correo_usuario";
-        $stmtCheck = $this->conn->prepare($queryCheck);
-        $stmtCheck->bindParam(":correo_usuario", $this->correo_usuario);
-        $stmtCheck->execute();
-
-        if ($stmtCheck->rowCount() > 0) {
-            echo "<script>alert('Error: El correo ya está registrado. Por favor, usa otro.');</script>";
-            return false;
+        if ($this->emailExists($this->correo_usuario)) {
+            return 'email_exists'; // Código de error específico
         }
 
-        // Si el correo no existe, proceder con la inserción
+        // Si el correo y nombre de usuario no existen, proceder con la inserción
         $query = "INSERT INTO " . $this->table_name . " 
                   SET nombre_usuario = :nombre_usuario, 
                       correo_usuario = :correo_usuario, 
@@ -51,10 +90,10 @@ class User {
         $stmt->bindParam(":id_rol", $this->id_rol);
 
         if ($stmt->execute()) {
-            return true;
+            return true; // Éxito
         }
 
-        return false;
+        return 'database_error'; // Error de base de datos
     }
 
     public function isAdmin() {
@@ -132,6 +171,16 @@ class User {
 
     // Actualizar datos del usuario
     public function update() {
+        // Verificar si el nombre de usuario ya está registrado (excluyendo el usuario actual)
+        if ($this->usernameExists($this->nombre_usuario, $this->id_usuario)) {
+            return 'username_exists'; // Código de error específico
+        }
+
+        // Verificar si el correo ya está registrado (excluyendo el usuario actual)
+        if ($this->emailExists($this->correo_usuario, $this->id_usuario)) {
+            return 'email_exists'; // Código de error específico
+        }
+
         $query = "UPDATE " . $this->table_name . " 
                   SET nombre_usuario = :nombre_usuario, 
                       correo_usuario = :correo_usuario, 
@@ -151,10 +200,10 @@ class User {
         $stmt->bindParam(":id_usuario", $this->id_usuario);
 
         if ($stmt->execute()) {
-            return true;
+            return true; // Éxito
         }
 
-        return false;
+        return 'database_error'; // Error de base de datos
     }
 
     // Actualizar contraseña (sin hashing)
@@ -193,7 +242,7 @@ class User {
         return false;
     }
 
-    // ========== NUEVOS MÉTODOS PARA ASIGNACIONES CON SERVICIOS ==========
+    // ========== MÉTODOS PARA ASIGNACIONES CON SERVICIOS ==========
 
     /**
      * Obtiene todos los clientes asignados a este usuario con sus servicios

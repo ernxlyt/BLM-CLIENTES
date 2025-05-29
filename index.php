@@ -393,7 +393,7 @@ include 'includes/layout_header.php';
             <thead>
                 <tr>
                     <th>Cliente</th>
-                    <th>Fecha de Pago</th>
+                    <th>Día de Pago</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                 </tr>

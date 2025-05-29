@@ -44,7 +44,7 @@ if ($is_ajax) {
                 <th>Empresa</th>
                 <th>País</th>
                 <th>Ubicación</th>
-                <th>Fecha Pago</th>
+                <th>Día Pago</th>
                 <th>Plan</th>
                 <th>Estado</th>
                 <th>Acciones</th>
@@ -540,9 +540,11 @@ include 'includes/layout_header.php';
     font-size: 1rem;
 }
 
+/* AQUÍ ES DONDE CAMBIAS EL TAMAÑO DE LA LETRA DEL NOMBRE DEL CLIENTE */
 .client-name {
-    font-weight: 600;
+    font-weight: 500; /* Cambié de 600 a 500 para que sea menos bold */
     color: var(--dark-gray);
+    font-size: 0.875rem; /* Cambié el tamaño de letra a más pequeño */
 }
 
 .company-text, .plan-text {

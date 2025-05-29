@@ -4,8 +4,9 @@ include_once 'config/database.php';
 include_once 'models/Report.php';
 include_once 'utils/session.php';
 
-// Require login
+// Require login and admin access
 requireLogin();
+requireAdmin();
 
 // Initialize database connection
 $database = new Database();
@@ -54,8 +55,8 @@ include 'includes/layout_header.php';
     border-radius: 12px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     border: 1px solid var(--border-gray);
-    padding: 1.25rem 1.5rem;
-    margin-bottom: 1.5rem;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
     position: relative;
 }
 
@@ -78,7 +79,7 @@ include 'includes/layout_header.php';
 }
 
 .page-title {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: var(--dark-gray);
     margin: 0;
@@ -88,15 +89,15 @@ include 'includes/layout_header.php';
 }
 
 .title-icon {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     background: var(--primary-green);
     color: var(--white);
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.875rem;
+    font-size: 1rem;
 }
 
 /* Sección de filtros mejorada */
@@ -176,10 +177,11 @@ include 'includes/layout_header.php';
     color: var(--primary-green);
 }
 
-/* Botones de filtro */
+/* Botones de filtro y exportación */
 .filter-buttons {
     display: flex;
     gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .btn-minimal {
@@ -194,6 +196,7 @@ include 'includes/layout_header.php';
     border: 1px solid transparent;
     font-size: 0.75rem;
     cursor: pointer;
+    white-space: nowrap;
 }
 
 .btn-primary {
@@ -217,6 +220,18 @@ include 'includes/layout_header.php';
 .btn-secondary:hover {
     background: var(--light-gray);
     border-color: var(--medium-gray);
+}
+
+.btn-success {
+    background: #10b981;
+    color: var(--white);
+    border-color: #10b981;
+}
+
+.btn-success:hover {
+    background: #059669;
+    border-color: #059669;
+    transform: translateY(-1px);
 }
 
 .btn-black {
@@ -594,7 +609,7 @@ include 'includes/layout_header.php';
         </div>
     </div>
 
-    <!-- Sección de filtros mejorada -->
+    <!-- Sección de filtros con botones de exportación -->
     <div class="filters-section">
         <div class="filters-grid">
             <div class="filter-group">
@@ -616,6 +631,10 @@ include 'includes/layout_header.php';
             </div>
             
             <div class="filter-buttons">
+                <button onclick="exportToExcel()" class="btn-minimal btn-success" title="Exportar a Excel con filtros aplicados">
+                    <i class="fas fa-file-excel"></i>
+                    Exportar Excel
+                </button>
                 <button onclick="clearAllFilters()" class="btn-minimal btn-secondary" title="Limpiar todos los filtros">
                     <i class="fas fa-times"></i>
                     Limpiar
@@ -645,7 +664,7 @@ include 'includes/layout_header.php';
         </div>
     </div>
 
-    <!-- Tabla de reportes - VERSIÓN COMPACTA -->
+    <!-- Tabla de reportes -->
     <div class="reports-table-container">
         <div class="table-header">
             <h3 class="table-title">Lista de Reportes</h3>
@@ -730,7 +749,7 @@ include 'includes/layout_header.php';
                     </td>
                     <td class="hide-mobile">
                         <div style="font-size: 0.75rem;">
-                            <?php echo htmlspecialchars($row['nombre_usuario_creador'] ?? 'Sistema'); ?>
+                            <?php echo htmlspecialchars($row['nombre_usuario'] ?? 'Sistema'); ?>
                             <div style="font-size: 0.6875rem; color: var(--medium-gray);">
                                 <?php echo date('d/m/Y', strtotime($row['fecha_creacion'])); ?>
                             </div>
@@ -788,7 +807,7 @@ include 'includes/layout_header.php';
     </div>
 </div>
 
-<!-- Lógica de búsqueda y filtros mejorada -->
+<!-- JavaScript para filtros y exportación -->
 <script>
     const searchInput = document.getElementById('searchInput');
     const dateFromInput = document.getElementById('dateFrom');
@@ -802,15 +821,6 @@ include 'includes/layout_header.php';
     const statsLabelElement = document.getElementById('statsLabel');
     const totalCountElement = document.getElementById('totalCount');
 
-    // Función para convertir fecha de dd/mm/yyyy a yyyy-mm-dd para comparación
-    function convertDateForComparison(dateString) {
-        const parts = dateString.split('/');
-        if (parts.length === 3) {
-            return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-        }
-        return dateString;
-    }
-
     // Función para filtrar los reportes
     function filterReports() {
         const searchFilter = searchInput.value.toLowerCase();
@@ -819,7 +829,6 @@ include 'includes/layout_header.php';
         let hasResults = false;
         let visibleCount = 0;
         
-        // Si la tabla no existe, no hacer nada
         if (!tableRows || tableRows.length === 0) return;
 
         tableRows.forEach(row => {
@@ -853,10 +862,8 @@ include 'includes/layout_header.php';
             }
         });
 
-        // Actualizar contador de resultados visibles
         updateVisibleCount(visibleCount);
 
-        // Mostrar o ocultar el mensaje de "No se encuentran reportes"
         if (hasResults) {
             noResultsMessage.style.display = 'none';
             reportsTable.style.display = '';
@@ -865,7 +872,6 @@ include 'includes/layout_header.php';
             reportsTable.style.display = 'none';
         }
 
-        // Actualizar indicadores de filtros activos
         updateActiveFilters();
     }
 
@@ -874,7 +880,6 @@ include 'includes/layout_header.php';
         visibleCountElement.textContent = count;
         statsLabelElement.textContent = count === 1 ? 'Reporte visible' : 'Reportes visibles';
         
-        // Mostrar/ocultar el contador total
         if (count === tableRows.length) {
             totalCountElement.style.display = 'none';
         } else {
@@ -950,6 +955,132 @@ include 'includes/layout_header.php';
         searchInput.focus();
     }
 
+    // FUNCIÓN DE EXPORTACIÓN A EXCEL
+    function exportToExcel() {
+        showLoadingNotification('Generando archivo Excel...');
+        
+        // Crear URL con parámetros para el script PHP
+        const params = new URLSearchParams({
+            search: searchInput.value,
+            date_from: dateFromInput.value,
+            date_to: dateToInput.value
+        });
+        
+        // Crear un enlace temporal para la descarga
+        const link = document.createElement('a');
+        link.href = 'reports-export-excel.php?' + params.toString();
+        link.download = '';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Mostrar mensaje de éxito después de un breve delay
+        setTimeout(() => {
+            hideLoadingNotification();
+            showNotification('Archivo Excel generado y descargado exitosamente', 'success');
+        }, 2000);
+    }
+
+    // Funciones de notificación
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        const bgColor = type === 'success' ? 'var(--primary-green)' : 
+                       type === 'warning' ? '#f59e0b' : 
+                       type === 'error' ? '#ef4444' : 'var(--primary-green)';
+        
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${bgColor};
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 300px;
+        `;
+        
+        const icon = type === 'success' ? 'fa-check-circle' : 
+                    type === 'warning' ? 'fa-exclamation-triangle' : 
+                    type === 'error' ? 'fa-times-circle' : 'fa-info-circle';
+        
+        notification.innerHTML = `
+            <i class="fas ${icon}"></i>
+            ${message}
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animar entrada
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Remover después de 4 segundos
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, 4000);
+    }
+
+    function showLoadingNotification(message) {
+        const notification = document.createElement('div');
+        notification.id = 'loadingNotification';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--dark-gray);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        `;
+        
+        notification.innerHTML = `
+            <i class="fas fa-spinner fa-spin"></i>
+            ${message}
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+    }
+
+    function hideLoadingNotification() {
+        const notification = document.getElementById('loadingNotification');
+        if (notification) {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }
+    }
+
     // Eventos de filtrado en tiempo real
     searchInput.addEventListener('keyup', filterReports);
     dateFromInput.addEventListener('change', filterReports);
@@ -958,7 +1089,7 @@ include 'includes/layout_header.php';
     // Validación de fechas
     dateFromInput.addEventListener('change', function() {
         if (dateToInput.value && this.value > dateToInput.value) {
-            alert('La fecha "Desde" no puede ser mayor que la fecha "Hasta"');
+            showNotification('La fecha "Desde" no puede ser mayor que la fecha "Hasta"', 'warning');
             this.value = '';
             filterReports();
         }
@@ -966,20 +1097,19 @@ include 'includes/layout_header.php';
 
     dateToInput.addEventListener('change', function() {
         if (dateFromInput.value && this.value < dateFromInput.value) {
-            alert('La fecha "Hasta" no puede ser menor que la fecha "Desde"');
+            showNotification('La fecha "Hasta" no puede ser menor que la fecha "Desde"', 'warning');
             this.value = '';
             filterReports();
         }
     });
     
-    // Añadir animación al cargar la página
+    // Inicialización al cargar la página
     document.addEventListener('DOMContentLoaded', function() {
         const header = document.querySelector('.page-header');
         const filtersSection = document.querySelector('.filters-section');
         const statsSection = document.querySelector('.stats-section');
         const tableContainer = document.querySelector('.reports-table-container');
         
-        // Aplicar animación de entrada
         [header, filtersSection, statsSection, tableContainer].forEach((element, index) => {
             if (element) {
                 element.style.opacity = '0';
@@ -993,7 +1123,6 @@ include 'includes/layout_header.php';
             }
         });
 
-        // Inicializar contador
         updateVisibleCount(tableRows.length);
     });
 </script>

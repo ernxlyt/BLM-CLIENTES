@@ -7,6 +7,7 @@ include_once 'utils/session.php';
 
 // Require login
 requireLogin();
+requireAdmin();
 
 // Initialize database connection
 $database = new Database();

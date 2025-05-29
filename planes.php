@@ -462,9 +462,6 @@ include 'includes/layout_header.php';
                     </td>
                     <td>
                         <div class="actions-cell">
-                            <button class="btn-minimal btn-icon btn-secondary" title="Ver Plan">
-                                <i class="fas fa-eye"></i>
-                            </button>
                             <a href="plan-form.php?id=<?php echo $row['id_plan']; ?>" 
                                class="btn-minimal btn-icon btn-warning" title="Editar Plan">
                                 <i class="fas fa-edit"></i>
