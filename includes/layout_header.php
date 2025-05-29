@@ -106,6 +106,10 @@
                     <i class="fas fa-tags"></i>
                     <span>Planes</span>
                 </a>
+                <a href="<?php echo strpos($_SERVER['PHP_SELF'], '/admin/') !== false ? '../reports.php' : 'reports.php'; ?>" class="nav-item">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Reportes</span>
+                </a>
                 <a href="<?php echo strpos($_SERVER['PHP_SELF'], '/admin/') !== false ? '../users.php' : 'users.php'; ?>" class="nav-item">
                     <i class="fas fa-user-shield"></i>
                     <span>Usuarios</span>
