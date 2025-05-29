@@ -27,7 +27,7 @@ body {
 
 .sidebar {
   width: 250px;
-  background-color: var(--primary);
+  background-color: #000000; /* ← CAMBIO AQUÍ: De #1f2937 a #000000 (negro) */
   color: var(--text-white);
   position: fixed;
   height: 100vh;

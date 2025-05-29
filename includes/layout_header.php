@@ -15,6 +15,8 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            background-color: #262626 !important; 
+            color: white !important;
         }
         
         .nav-menu {
@@ -25,14 +27,62 @@
             margin-top: auto;
             padding-bottom: 1rem;
         }
-    </style>
 
+        /* Estilos para los elementos de navegación */
+        .nav-item {
+            color: white !important;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            border-left: 4px solid transparent;
+        }
+
+        /* ICONOS EN VERDE */
+        .nav-item i {
+            color: #23D950 !important; /* ← ICONOS EN VERDE */
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Efectos hover */
+        .nav-item:hover,
+        .nav-item.active {
+            background-color: rgba(35, 217, 80, 0.1) !important; /* ← HOVER CON VERDE SUAVE */
+            border-left: 4px solid #23D950 !important; /* ← BORDE VERDE */
+        }
+
+        /* Iconos en hover mantienen el verde pero más brillante */
+        .nav-item:hover i,
+        .nav-item.active i {
+            color: #2dd55b !important; /* ← VERDE MÁS BRILLANTE EN HOVER */
+        }
+
+        /* Asegurar que el logo container también sea negro */
+        .logo-container {
+            background-color: transparent !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Estilo para el logo */
+        .logo {
+            max-width: 150px;
+            height: auto;
+        }
+    </style>
 </head>
 <body>
     <div class="layout">
         <aside class="sidebar">
             <div class="logo-container">
-                <img src="<?php echo strpos($_SERVER['PHP_SELF'], '/admin/') !== false ? '../assets/img/BLANCO.png' : 'assets/img/BLANCO.png'; ?>" alt="Logo" class="logo">
+                <img src="<?php echo strpos($_SERVER['PHP_SELF'], '/admin/') !== false ? '../assets/img/bigleapcolor1.png' : 'assets/img/bigleapcolor1.png'; ?>" alt="Logo" class="logo">
             </div>
             <nav class="nav-menu">
                 <a href="<?php echo strpos($_SERVER['PHP_SELF'], '/admin/') !== false ? '../index.php' : 'index.php'; ?>" class="nav-item">

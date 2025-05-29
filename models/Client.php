@@ -16,6 +16,7 @@ class Client {
     public $estado;
     public $pais;
     public $provincia;
+    public $notas; // ← NUEVO CAMPO
 
     public function __construct($db) {
         $this->conn = $db;
@@ -23,8 +24,8 @@ class Client {
 
     public function create() {
         $query = "INSERT INTO " . $this->table_name . " 
-            (nombre_cliente, fecha_inicio, cumpleaños, fecha_pago, estado, id_plan, id_empresa, pais, provincia)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            (nombre_cliente, fecha_inicio, cumpleaños, fecha_pago, estado, id_plan, id_empresa, pais, provincia, notas)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $this->conn->prepare($query);
 
@@ -37,6 +38,7 @@ class Client {
         
         $this->pais = $this->pais ? htmlspecialchars(strip_tags($this->pais)) : null;
         $this->provincia = $this->provincia ? htmlspecialchars(strip_tags($this->provincia)) : null;
+        $this->notas = $this->notas ? htmlspecialchars(strip_tags($this->notas)) : null;
         
         // Preparar valores para id_plan e id_empresa (pueden ser NULL)
         $id_plan = !empty($this->id_plan) ? $this->id_plan : null;
@@ -51,6 +53,7 @@ class Client {
         $stmt->bindParam(7, $id_empresa);
         $stmt->bindParam(8, $this->pais);
         $stmt->bindParam(9, $this->provincia);
+        $stmt->bindParam(10, $this->notas);
 
         if ($stmt->execute()) {
             return true;
@@ -107,7 +110,8 @@ class Client {
                          OR c.pais LIKE ? 
                          OR c.provincia LIKE ? 
                          OR p.nombre_plan LIKE ? 
-                         OR c.estado LIKE ?)
+                         OR c.estado LIKE ?
+                         OR c.notas LIKE ?)
                       ORDER BY c.id_cliente DESC
                       LIMIT ? OFFSET ?";
             $stmt = $this->conn->prepare($query);
@@ -117,8 +121,9 @@ class Client {
             $stmt->bindParam(4, $search_term);
             $stmt->bindParam(5, $search_term);
             $stmt->bindParam(6, $search_term);
-            $stmt->bindParam(7, $records_per_page, PDO::PARAM_INT);
-            $stmt->bindParam(8, $offset, PDO::PARAM_INT);
+            $stmt->bindParam(7, $search_term);
+            $stmt->bindParam(8, $records_per_page, PDO::PARAM_INT);
+            $stmt->bindParam(9, $offset, PDO::PARAM_INT);
         } else {
             $query = "SELECT c.*, p.nombre_plan, e.nombre_empresa, e.rubro as rubro_empresa
                       FROM " . $this->table_name . " c
@@ -131,7 +136,8 @@ class Client {
                          OR c.pais LIKE ? 
                          OR c.provincia LIKE ? 
                          OR p.nombre_plan LIKE ? 
-                         OR c.estado LIKE ?)
+                         OR c.estado LIKE ?
+                         OR c.notas LIKE ?)
                       ORDER BY c.id_cliente DESC
                       LIMIT ? OFFSET ?";
             $stmt = $this->conn->prepare($query);
@@ -142,8 +148,9 @@ class Client {
             $stmt->bindParam(5, $search_term);
             $stmt->bindParam(6, $search_term);
             $stmt->bindParam(7, $search_term);
-            $stmt->bindParam(8, $records_per_page, PDO::PARAM_INT);
-            $stmt->bindParam(9, $offset, PDO::PARAM_INT);
+            $stmt->bindParam(8, $search_term);
+            $stmt->bindParam(9, $records_per_page, PDO::PARAM_INT);
+            $stmt->bindParam(10, $offset, PDO::PARAM_INT);
         }
 
         $stmt->execute();
@@ -165,7 +172,8 @@ class Client {
                              OR c.pais LIKE ? 
                              OR c.provincia LIKE ? 
                              OR p.nombre_plan LIKE ? 
-                             OR c.estado LIKE ?)";
+                             OR c.estado LIKE ?
+                             OR c.notas LIKE ?)";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(1, $search_term);
                 $stmt->bindParam(2, $search_term);
@@ -173,6 +181,7 @@ class Client {
                 $stmt->bindParam(4, $search_term);
                 $stmt->bindParam(5, $search_term);
                 $stmt->bindParam(6, $search_term);
+                $stmt->bindParam(7, $search_term);
             } else {
                 $query = "SELECT COUNT(DISTINCT c.id_cliente) as total 
                           FROM " . $this->table_name . " c
@@ -185,7 +194,8 @@ class Client {
                              OR c.pais LIKE ? 
                              OR c.provincia LIKE ? 
                              OR p.nombre_plan LIKE ? 
-                             OR c.estado LIKE ?)";
+                             OR c.estado LIKE ?
+                             OR c.notas LIKE ?)";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(1, $user_id);
                 $stmt->bindParam(2, $search_term);
@@ -194,6 +204,7 @@ class Client {
                 $stmt->bindParam(5, $search_term);
                 $stmt->bindParam(6, $search_term);
                 $stmt->bindParam(7, $search_term);
+                $stmt->bindParam(8, $search_term);
             }
         } else {
             if($is_admin) {
@@ -256,6 +267,7 @@ class Client {
             $this->rubro_empresa = $row['rubro_empresa'];
             $this->pais = $row['pais'] ?? null;
             $this->provincia = $row['provincia'] ?? null;
+            $this->notas = $row['notas'] ?? null; // ← NUEVO CAMPO
             
             return true;
         }
@@ -275,6 +287,7 @@ class Client {
         
         $this->pais = $this->pais ? htmlspecialchars(strip_tags($this->pais)) : null;
         $this->provincia = $this->provincia ? htmlspecialchars(strip_tags($this->provincia)) : null;
+        $this->notas = $this->notas ? htmlspecialchars(strip_tags($this->notas)) : null;
         
         $query = "UPDATE " . $this->table_name . " 
                   SET nombre_cliente = ?, 
@@ -285,7 +298,8 @@ class Client {
                       id_plan = ?, 
                       id_empresa = ?,
                       pais = ?,
-                      provincia = ?
+                      provincia = ?,
+                      notas = ?
                   WHERE id_cliente = ?";
         
         $stmt = $this->conn->prepare($query);
@@ -303,7 +317,8 @@ class Client {
         $stmt->bindParam(7, $id_empresa);
         $stmt->bindParam(8, $this->pais);
         $stmt->bindParam(9, $this->provincia);
-        $stmt->bindParam(10, $this->id_cliente);
+        $stmt->bindParam(10, $this->notas);
+        $stmt->bindParam(11, $this->id_cliente);
         
         if ($stmt->execute()) {
             return true;
@@ -349,6 +364,139 @@ class Client {
         return $social_networks;
     }
 
+    // ========== MÉTODOS PARA ASIGNACIONES CON SERVICIOS ==========
+
+    /**
+     * Obtiene todos los usuarios asignados a este cliente con sus servicios
+     */
+    public function getAssignedUsers() {
+        $query = "SELECT 
+                    r.id_relacion,
+                    u.id_usuario,
+                    u.nombre_usuario,
+                    u.correo_usuario,
+                    r.tipo_servicio,
+                    r.fecha_asignacion,
+                    r.notas,
+                    rol.nombre_rol
+                  FROM relaciones r
+                  INNER JOIN usuarios u ON r.id_usuario = u.id_usuario
+                  INNER JOIN roles rol ON u.id_rol = rol.id_rol
+                  WHERE r.id_cliente = ?
+                  ORDER BY r.tipo_servicio, u.nombre_usuario";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $this->id_cliente);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Asigna un usuario a este cliente con un servicio específico
+     */
+    public function assignUser($id_usuario, $tipo_servicio, $notas = '') {
+        // Verificar si ya existe una asignación igual
+        $query_check = "SELECT id_relacion FROM relaciones 
+                        WHERE id_usuario = ? AND id_cliente = ? AND tipo_servicio = ?";
+        $stmt_check = $this->conn->prepare($query_check);
+        $stmt_check->bindParam(1, $id_usuario);
+        $stmt_check->bindParam(2, $this->id_cliente);
+        $stmt_check->bindParam(3, $tipo_servicio);
+        $stmt_check->execute();
+        
+        if ($stmt_check->rowCount() > 0) {
+            // Ya existe, actualizar notas
+            $row = $stmt_check->fetch(PDO::FETCH_ASSOC);
+            $id_relacion = $row['id_relacion'];
+            
+            $query_update = "UPDATE relaciones SET notas = ? WHERE id_relacion = ?";
+            $stmt_update = $this->conn->prepare($query_update);
+            $stmt_update->bindParam(1, $notas);
+            $stmt_update->bindParam(2, $id_relacion);
+            return $stmt_update->execute();
+        } else {
+            // No existe, crear nueva asignación
+            $query_insert = "INSERT INTO relaciones (id_usuario, id_cliente, tipo_servicio, notas) 
+                            VALUES (?, ?, ?, ?)";
+            $stmt_insert = $this->conn->prepare($query_insert);
+            $stmt_insert->bindParam(1, $id_usuario);
+            $stmt_insert->bindParam(2, $this->id_cliente);
+            $stmt_insert->bindParam(3, $tipo_servicio);
+            $stmt_insert->bindParam(4, $notas);
+            return $stmt_insert->execute();
+        }
+    }
+
+    /**
+     * Actualiza una asignación existente
+     */
+    public function updateAssignment($id_relacion, $id_usuario, $tipo_servicio, $notas = '') {
+        $query = "UPDATE relaciones 
+                  SET id_usuario = ?, tipo_servicio = ?, notas = ? 
+                  WHERE id_relacion = ? AND id_cliente = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $id_usuario);
+        $stmt->bindParam(2, $tipo_servicio);
+        $stmt->bindParam(3, $notas);
+        $stmt->bindParam(4, $id_relacion);
+        $stmt->bindParam(5, $this->id_cliente);
+        return $stmt->execute();
+    }
+
+    /**
+     * Elimina una asignación
+     */
+    public function removeAssignment($id_relacion) {
+        $query = "DELETE FROM relaciones WHERE id_relacion = ? AND id_cliente = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $id_relacion);
+        $stmt->bindParam(2, $this->id_cliente);
+        return $stmt->execute();
+    }
+
+    /**
+     * Obtiene los tipos de servicio existentes para autocompletado
+     */
+    public function getServiceTypes($term = '') {
+        $query = "SELECT DISTINCT tipo_servicio FROM relaciones 
+                  WHERE tipo_servicio IS NOT NULL AND tipo_servicio != ''";
+        
+        if (!empty($term)) {
+            $term = "%$term%";
+            $query .= " AND tipo_servicio LIKE ?";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(1, $term);
+        } else {
+            $stmt = $this->conn->prepare($query);
+        }
+        
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $tipos = [];
+        foreach ($result as $row) {
+            $tipos[] = $row['tipo_servicio'];
+        }
+        
+        return $tipos;
+    }
+
+    /**
+     * Obtiene todos los usuarios disponibles para asignar
+     */
+    public function getAvailableUsers() {
+        $query = "SELECT id_usuario, nombre_usuario, correo_usuario, r.nombre_rol
+                  FROM usuarios u
+                  INNER JOIN roles r ON u.id_rol = r.id_rol
+                  ORDER BY u.nombre_usuario";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Mantener todos los métodos existentes (getUpcomingPayments, getUpcomingBirthdays, getRecentClients)...
+    
     // Get upcoming payments
     public function getUpcomingPayments($user_id, $is_admin, $days = 7) {
         // Obtener todos los clientes primero
